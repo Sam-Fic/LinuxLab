@@ -1,0 +1,55 @@
+第三方组件许可 / Third-party licenses
+
+本应用（Linux 入门 · com.linuxlab.starter）自身源码采用 GNU General Public License v3.0，
+完整协议见仓库根目录的 LICENSE。
+
+App 内置的 Linux 运行环境由下列第三方自由软件组成，它们保持各自原有的许可证。
+
+---
+
+#1. Alpine Linux mini rootfs（内置于 assets/alpine-aarch64.tar）
+
+来源：Alpine Linux v3.20.3 aarch64 minirootfs — <https://alpinelinux.org/downloads/>
+
+ |  组件  |  许可证  |  源码获取  |
+ | --- | --- | --- |
+ |  busybox  |  GPL-2.0-only  |  <https://busybox.net/downloads/>  |
+ |  apk-tools  |  GPL-2.0  |  <https://gitlab.alpinelinux.org/alpine/apk-tools>  |
+ |  musl libc  |  MIT  |  <https://musl.libc.org/>  |
+ |  alpine-baselayout / openrc 等基础包  |  GPL-2.0 / MIT / BSD 等  |  <https://pkgs.alpinelinux.org/>（按包名查 License 字段）  |
+
+#2. PRoot（app/src/main/jniLibs/arm64-v8a/libproot.so，静态可执行文件）
+
+ |  组件  |  许可证  |  源码获取  |
+ | --- | --- | --- |
+ |  PRoot  |  GPL-2.0  |  <https://github.com/proot-me/proot>  |
+
+#3. 静态 BusyBox（兜底 shell）
+
+ |  文件  |  许可证  |  源码获取  |
+ | --- | --- | --- |
+ |  assets/busybox-static-aarch64、jniLibs/libbusybox.so  |  GPL-2.0-only  |  <https://busybox.net/downloads/>（Alpine 包：busybox-static）  |
+
+#4. Java / Kotlin 依赖
+
+ |  组件  |  许可证  |
+ | --- | --- |
+ |  Apache Commons Compress  |  Apache-2.0 — <https://commons.apache.org/proper/commons-compress/>  |
+ |  AndroidX（Core / Lifecycle / Activity / Navigation / Compose / Material3）  |  Apache-2.0 — <https://developer.android.com/jetpack/androidx>  |
+ |  Material Symbols & Icons  |  Apache-2.0 — <https://fonts.google.com/icons>  |
+ |  Kotlin / kotlinx-coroutines  |  Apache-2.0 — <https://github.com/JetBrains/kotlin>  |
+
+#5. 其他
+
+- Material Design 3 规范与动态取色（Monet）由 Android 系统运行时提供，不属于本项目分发内容。
+
+---
+
+#说明
+
+1. 上表 GPL 组件均为独立的可执行程序，本项目仅通过 fork/exec 调用它们，未与其链接、未修改其代码，
+   属于 GPLv2 第 2 条末段所述的「单纯聚合（mere aggregation）」，因此本项目自身代码可以采用 GPL-3.0。
+2. 本仓库不包含任何预编译二进制。alpine-aarch64.tar、libproot.so、busybox-static-aarch64
+   由 setup-toolchain.sh 在构建时从上述官方地址下载（已列入 .gitignore）。
+3. 发布的 APK 内附 assets/THIRD_PARTY_LICENSES.txt，并在「外观与关于 → 开源许可」中展示，
+   以满足 GPL 关于源码可得性的要求。
