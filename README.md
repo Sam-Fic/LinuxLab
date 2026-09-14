@@ -1,4 +1,4 @@
-# Linux 入门 · Linux Starter
+# Linux Starter
 
 面向初学者的 Linux 学习 App，Material 3 + 莫奈（Monet）动态取色，内置 **221 条命令速查** 与一个 **真实 Linux 终端**（Alpine Linux + proot + 原生 PTY）。
 
