@@ -3,7 +3,7 @@
 面向初学者的 Linux 学习 App，Material 3 + 莫奈（Monet）动态取色，内置 **221 条命令速查** 与一个 **真实 Linux 终端**（Alpine Linux + proot + 原生 PTY）。
 
 - **包名**：`com.linuxlab.starter`
-- **版本**：1.0（versionCode 1）
+- **版本**：1.1（versionCode 10）
 - **minSdk 26（Android 8.0） / targetSdk 34 / compileSdk 34**
 - **ABI**：仅 `arm64-v8a`（rootfs 与 proot 均为 aarch64）
 - **APK 体积**：约 5.9 MB（内置了完整的 Alpine Linux 用户态）
