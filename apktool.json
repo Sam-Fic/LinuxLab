@@ -1,5 +1,5 @@
 {
-  "apkFileName": "linux-starter-release (5)_src.apk",
+  "apkFileName": "linux-starter-release (7)_src.apk",
   "PackageInfo": {
     "forcedPackageId": "127",
     "renameManifestPackage": null
@@ -14,8 +14,8 @@
   "version": "2.4.0-260501",
   "sharedLibrary": false,
   "VersionInfo": {
-    "versionName": "1.1.0",
-    "versionCode": "8"
+    "versionName": "1.2.1",
+    "versionCode": "10"
   },
   "UsesFramework": {
     "ids": [1],
@@ -216,7 +216,7 @@
     "org/apache/commons/codec/language/bm/gen_languages.txt": "8",
     "org/apache/commons/codec/language/bm/sep_approx_portuguese.txt": "8"
   },
-  "apkFilePath": "/storage/emulated/0/Download/linux-starter-release (5).apk",
+  "apkFilePath": "/storage/emulated/0/Download/linux-starter-release (7).apk",
   "compactEntries": false,
   "isFrameworkApk": false,
   "sdkInfo": {
