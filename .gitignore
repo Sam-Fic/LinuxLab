@@ -1,0 +1,12 @@
+# 构建产物
+dist/
+*.apk
+keystore.jks
+
+# 本地工具缓存
+tools/
+third_party/
+
+# 临时文件
+*.log
+.DS_Store

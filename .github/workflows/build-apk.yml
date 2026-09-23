@@ -1,0 +1,84 @@
+name: Build APK
+
+on:
+  push:
+    branches: [master]
+    tags:
+      - 'v*'
+      - 'R*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build & sign APK
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Cache apktool
+        uses: actions/cache@v4
+        with:
+          path: ~/apktool.jar
+          key: apktool-2.9.3
+
+      - name: Download apktool
+        run: |
+          if [ ! -f ~/apktool.jar ]; then
+            curl -fsSL -o ~/apktool.jar \
+              https://github.com/iBotPeaches/Apktool/releases/download/v2.9.3/apktool_2.9.3.jar
+          fi
+          java -jar ~/apktool.jar --version
+
+      - name: Download Android build-tools (aapt2 / zipalign / apksigner)
+        run: |
+          curl -fsSL -o /tmp/bt.zip https://dl.google.com/android/repository/build-tools_r34-linux.zip
+          mkdir -p ~/build-tools
+          unzip -q -o /tmp/bt.zip -d ~/build-tools
+          cp -r ~/build-tools/android-14/* ~/build-tools/
+          ~/build-tools/apksigner --version
+          ~/build-tools/zipalign -h >/dev/null 2>&1 || true
+
+      - name: Build APK (apktool rebuild + zipalign + apksigner)
+        env:
+          APKTOOL_JAR: ${{ github.workspace }}/apktool.jar
+          KEYSTORE: ${{ secrets.KEYSTORE }}
+          KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
+          KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
+          KEY_PASS: ${{ secrets.KEY_PASS }}
+        run: |
+          cp ~/apktool.jar ./apktool.jar
+          chmod +x scripts/build-apk.sh
+          if [ -n "$KEYSTORE" ]; then
+            echo "$KEYSTORE" | base64 -d > keystore.jks
+            KEYSTORE="$PWD/keystore.jks" \
+              ANDROID_BUILD_TOOLS="$HOME/build-tools" \
+              bash scripts/build-apk.sh "$GITHUB_WORKSPACE" "$GITHUB_WORKSPACE/dist/linux-starter-release.apk"
+          else
+            ANDROID_BUILD_TOOLS="$HOME/build-tools" \
+              bash scripts/build-apk.sh "$GITHUB_WORKSPACE" "$GITHUB_WORKSPACE/dist/linux-starter-release.apk"
+          fi
+          cp "$GITHUB_WORKSPACE/dist/linux-starter-release.apk" ./linux-starter-release.apk
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-starter-release
+          path: linux-starter-release.apk
+          if-no-files-found: error
+
+      - name: Publish Release (tags only)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: linux-starter-release.apk
+          generate_release_notes: true

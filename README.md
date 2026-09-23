@@ -229,3 +229,18 @@ Termux 也正因为这条限制把 targetSdk 锁死在 28，并因此不再上�
    由 `setup-toolchain.sh` 构建时从官方地址下载，并已在 `.gitignore` 中排除。
 3. 若你 fork 或二次分发本应用，请保留 `LICENSE`、`THIRD_PARTY_LICENSES.md`
    以及 APK 内的 `THIRD_PARTY_LICENSES.txt`，并保留各源文件顶部的版权头。
+
+---
+
+## 十一、GitHub Actions 自动打包
+
+本仓库配置了 GitHub Actions 自动打包流水线（`.github/workflows/build-apk.yml`），
+基于仓库内已有的 **apktool 解包产物**重新构建并签名 APK，无需 Gradle 源码工程：
+
+- **触发时机**：push 到 `master` 自动构建；打 `v*` / `R*` 标签时构建并自动发布 Release（附 APK 资产）。
+- **产物**：`dist/linux-starter-release.apk`（arm64-v8a，约 7.5~7.9 MB），同时上传为 Actions artifact。
+- **构建原理**：CI 用 apktool 2.9.3 读取解包目录（自动将 `apktool.json` 转为标准 `apktool.yml`），
+  完成资源编译、DEX 复用、zipalign 对齐、apksigner 签名（v2/v3）。
+- **本地复现**：`ANDROID_BUILD_TOOLS=<build-tools路径> bash scripts/build-apk.sh`。
+- **正式签名**：默认使用临时 debug key；如需正式签名，在仓库 Secrets 中配置
+  `KEYSTORE`（base64 编码的 .jks/.keystore）、`KEYSTORE_PASS`、`KEYSTORE_ALIAS`、`KEY_PASS` 即可自动启用。
