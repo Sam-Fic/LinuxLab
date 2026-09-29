@@ -1,0 +1,14 @@
+# 由 setup-toolchain.sh 下载的第三方二进制（不入库：避免仓库膨胀，也避免仓库层面分发二进制）
+app/src/main/assets/alpine-aarch64.tar
+app/src/main/assets/busybox-static-aarch64
+app/src/main/jniLibs/
+
+# 构建产物与本地配置
+*.apk
+*.aab
+app/build/
+build/
+.gradle/
+.kotlin/
+local.properties
+/.idea/

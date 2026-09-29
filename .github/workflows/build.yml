@@ -1,0 +1,48 @@
+name: 构建 APK / Build APK
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 缓存 Gradle 依赖
+        uses: actions/cache@v4
+        with:
+          path: /opt/gradle-home
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: gradle-${{ runner.os }}-
+
+      - name: 准备工具链（JDK17 / SDK34 / NDK / 原生二进制）
+        run: bash ./setup-toolchain.sh
+
+      - name: 构建 Release APK
+        env:
+          JAVA_HOME: /opt/jdk
+          ANDROID_HOME: /opt/android-sdk
+          ANDROID_SDK_ROOT: /opt/android-sdk
+          GRADLE_USER_HOME: /opt/gradle-home
+        run: |
+          chmod +x ./gradlew
+          ./gradlew assembleRelease --no-daemon --console=plain
+
+      - name: 校验签名
+        run: |
+          $ANDROID_HOME/build-tools/34.0.0/apksigner verify \
+            app/build/outputs/apk/release/app-release.apk
+
+      - name: 上传 APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-starter-release
+          path: app/build/outputs/apk/release/*.apk
+          if-no-files-found: error

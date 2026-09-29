@@ -1,0 +1,4 @@
+<resources>
+    <!-- 启动闪屏底色，避免冷启动白屏；真正的配色由 Compose Material 3 / 莫奈取色接管 -->
+    <style name="Theme.LinuxStarter" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>
