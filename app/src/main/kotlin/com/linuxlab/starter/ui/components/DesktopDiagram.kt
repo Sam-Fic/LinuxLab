@@ -44,6 +44,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -71,14 +72,15 @@ import com.linuxlab.starter.model.WinButton
 fun DesktopDiagram(
     spec: LayoutSpec,
     modifier: Modifier = Modifier,
-    detailed: Boolean = false
+    detailed: Boolean = false,
+    // 同心圆角：示意图是嵌套色块，允许外层容器按同心原则指定内层圆角
+    shape: Shape = RoundedCornerShape(12.dp)
 ) {
     val cs = MaterialTheme.colorScheme
     val t = tintOf(cs, spec.tint)
     // 桌面底色：在各桌面统一的浅底上，混一点该桌面环境的主色，远看就能分辨
     val desk = lerp(cs.surfaceContainerHighest, t.panel, 0.18f)
     val marks = marksOf(spec)
-    val shape = RoundedCornerShape(12.dp)
 
     Column(
         modifier

@@ -369,7 +369,8 @@ private fun TasksCard(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 3.dp),
-                        shape = RoundedCornerShape(12.dp),
+                        // 同心圆角：外卡 18.dp 与任务块间距 14.dp，圆角差 18-14=4.dp
+                        shape = RoundedCornerShape(4.dp),
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.06f),
                         onClick = { onFill(task.example) }
                     ) {

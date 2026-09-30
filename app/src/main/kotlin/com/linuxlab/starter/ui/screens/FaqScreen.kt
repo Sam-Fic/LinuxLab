@@ -266,8 +266,9 @@ private fun FaqCard(
             }
 
             if (faq.symptom.isNotBlank()) {
+                // 同心圆角：外卡 20.dp 与内块间距 16.dp，圆角差 20-16=4.dp
                 Surface(
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(4.dp),
                     color = MaterialTheme.colorScheme.surfaceContainerHigh,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -355,6 +356,8 @@ private fun FaqCard(
                                 CodeBlock(
                                     code = step.command,
                                     onCopy = onCopy,
+                                    // 同心圆角：外卡 20.dp 与代码块间距 16.dp，圆角差 20-16=4.dp
+                                    shape = RoundedCornerShape(4.dp),
                                     modifier = Modifier.padding(top = 6.dp)
                                 )
                             }

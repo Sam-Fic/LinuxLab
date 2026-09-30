@@ -52,6 +52,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
@@ -113,11 +114,12 @@ fun rememberCopyAction(): (String) -> Unit {
 fun CodeBlock(
     code: String,
     modifier: Modifier = Modifier,
-    onCopy: (String) -> Unit = {}
+    onCopy: (String) -> Unit = {},
+    shape: Shape = RoundedCornerShape(12.dp)
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+        shape = shape,
         color = MaterialTheme.colorScheme.surfaceContainerHigh
     ) {
         Row(
@@ -188,8 +190,9 @@ fun CategoryCard(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
+            // 同心圆角：外层卡 20.dp，图标块距卡边缘 padding 16.dp，圆角差 20-16=4.dp
             Surface(
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(4.dp),
                 color = MaterialTheme.colorScheme.secondaryContainer,
                 modifier = Modifier.size(44.dp)
             ) {

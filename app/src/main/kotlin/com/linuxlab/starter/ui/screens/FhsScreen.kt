@@ -531,7 +531,8 @@ private fun DetailPanel(
     ) {
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
+            // 同心圆角：内层各块距卡边缘 14.dp，圆角差 18-4=14.dp
+            shape = RoundedCornerShape(18.dp),
             color = cs.surfaceContainerHigh
         ) {
             Column(Modifier.padding(14.dp)) {
@@ -553,7 +554,7 @@ private fun DetailPanel(
                         modifier = Modifier.weight(1f)
                     )
                     Surface(
-                        shape = RoundedCornerShape(8.dp),
+                        shape = RoundedCornerShape(4.dp),
                         color = cs.surfaceContainerHighest
                     ) {
                         Text(
@@ -620,7 +621,12 @@ private fun DetailPanel(
                         modifier = Modifier.padding(top = 12.dp, bottom = 4.dp)
                     )
                     node.commands.forEach { cmd ->
-                        CodeBlock(code = cmd, modifier = Modifier.padding(bottom = 8.dp), onCopy = onCopy)
+                        CodeBlock(
+                            code = cmd,
+                            modifier = Modifier.padding(bottom = 8.dp),
+                            onCopy = onCopy,
+                            shape = RoundedCornerShape(4.dp),
+                        )
                     }
                 }
 
@@ -629,7 +635,7 @@ private fun DetailPanel(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = 6.dp),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(4.dp),
                         color = cs.surfaceContainerHighest
                     ) {
                         Column(Modifier.padding(12.dp)) {

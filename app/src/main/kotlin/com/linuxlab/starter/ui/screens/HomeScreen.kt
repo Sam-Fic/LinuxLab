@@ -566,8 +566,9 @@ private fun SectionCard(spec: SectionSpec, onClick: () -> Unit) {
         color = spec.container
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
+            // 同心圆角：外卡 20.dp 与内图标块间距 14.dp，圆角差 20-14=6.dp
             Surface(
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(6.dp),
                 color = spec.content.copy(alpha = 0.12f),
                 modifier = Modifier.size(38.dp)
             ) {
@@ -664,10 +665,12 @@ private fun DailyCard(
                     modifier = Modifier.padding(top = 2.dp)
                 )
                 if (command.examples.isNotEmpty()) {
+                    // 同心圆角：外卡 24.dp 与代码块间距 20.dp，圆角差 24-20=4.dp
                     CodeBlock(
                         code = command.examples.first().code,
                         modifier = Modifier.padding(top = 14.dp),
-                        onCopy = onCopy
+                        onCopy = onCopy,
+                        shape = RoundedCornerShape(4.dp)
                     )
                 }
             }

@@ -201,7 +201,8 @@ private fun CommandAnatomyCard() {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 10.dp),
-            shape = RoundedCornerShape(16.dp),
+            // 同心圆角：内层语法块距卡边缘 16.dp，圆角差 20-4=16.dp
+            shape = RoundedCornerShape(20.dp),
             color = cs.surfaceContainerHigh
         ) {
             Column(Modifier.padding(16.dp)) {
@@ -213,7 +214,7 @@ private fun CommandAnatomyCard() {
                 Spacer(Modifier.height(12.dp))
 
                 Surface(
-                    shape = RoundedCornerShape(10.dp),
+                    shape = RoundedCornerShape(4.dp),
                     color = cs.surfaceContainerLowest
                 ) {
                     Row(

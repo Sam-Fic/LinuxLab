@@ -132,7 +132,7 @@ private fun DesktopEnvCard(env: DesktopEnv, onClick: () -> Unit) {
         shape = RoundedCornerShape(20.dp),
         color = cs.surfaceContainerHigh
     ) {
-        Column(Modifier.padding(14.dp)) {
+        Column(Modifier.padding(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(
@@ -159,16 +159,18 @@ private fun DesktopEnvCard(env: DesktopEnv, onClick: () -> Unit) {
             }
 
             // 整幅布局示意图：宽图才看得清面板 / Dock / 桌面元素的差别
+            // 同心递进：外层卡 20.dp、间距 8 → 图块 12.dp、间距 8 → 示意图 4.dp
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 10.dp),
+                    .padding(top = 8.dp),
                 shape = RoundedCornerShape(12.dp),
                 color = cs.surfaceContainerLowest
             ) {
                 DesktopDiagram(
                     spec = env.layout,
                     detailed = false,
+                    shape = RoundedCornerShape(4.dp),
                     modifier = Modifier.padding(8.dp)
                 )
             }
@@ -264,7 +266,7 @@ fun DesktopEnvDetailScreen(id: String, onBack: () -> Unit) {
         ) {
             item {
                 Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                    // 大图
+                    // 大图：同心圆角，外层 14.dp、间距 10 → 示意图 4.dp
                     Surface(
                         shape = RoundedCornerShape(14.dp),
                         color = cs.surfaceContainerLowest
@@ -272,6 +274,7 @@ fun DesktopEnvDetailScreen(id: String, onBack: () -> Unit) {
                         DesktopDiagram(
                             spec = env.layout,
                             detailed = true,
+                            shape = RoundedCornerShape(4.dp),
                             modifier = Modifier.padding(10.dp)
                         )
                     }
@@ -435,7 +438,8 @@ private fun KeyRow(binding: KeyBinding) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 3.dp),
-        shape = RoundedCornerShape(12.dp),
+        // 同心圆角：内层键帽 6.dp 与间距 12.dp，圆角差 18-6=12.dp
+        shape = RoundedCornerShape(18.dp),
         color = MaterialTheme.colorScheme.surfaceContainerHigh
     ) {
         Row(
