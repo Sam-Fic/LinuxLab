@@ -382,11 +382,11 @@ fun ChmodScreen(onBack: () -> Unit) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 4.dp),
-                    // 同心圆角：内层代码块距卡边缘 14.dp，圆角差 18-4=14.dp
+                    // 同心圆角：内层代码块距卡边缘 12.dp，圆角差 18-6=12.dp
                     shape = RoundedCornerShape(18.dp),
                     color = cs.errorContainer
                 ) {
-                    Column(Modifier.padding(14.dp)) {
+                    Column(Modifier.padding(12.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 Icons.Outlined.Warning,
@@ -425,7 +425,7 @@ fun ChmodScreen(onBack: () -> Unit) {
                             code = "stat -c '%a %n' $name",
                             modifier = Modifier.padding(top = 12.dp),
                             onCopy = copy,
-                            shape = RoundedCornerShape(4.dp)
+                            shape = RoundedCornerShape(6.dp)
                         )
                     }
                 }

@@ -188,11 +188,11 @@ fun CategoryCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(14.dp)
         ) {
-            // 同心圆角：外层卡 20.dp，图标块距卡边缘 padding 16.dp，圆角差 20-16=4.dp
+            // 同心圆角：外层卡 20.dp，图标块距卡边缘 padding 14.dp，圆角差 20-14=6.dp
             Surface(
-                shape = RoundedCornerShape(4.dp),
+                shape = RoundedCornerShape(6.dp),
                 color = MaterialTheme.colorScheme.secondaryContainer,
                 modifier = Modifier.size(44.dp)
             ) {

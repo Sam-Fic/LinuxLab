@@ -201,11 +201,11 @@ private fun CommandAnatomyCard() {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 10.dp),
-            // 同心圆角：内层语法块距卡边缘 16.dp，圆角差 20-4=16.dp
+            // 同心圆角：内层语法块距卡边缘 14.dp，圆角差 20-6=14.dp
             shape = RoundedCornerShape(20.dp),
             color = cs.surfaceContainerHigh
         ) {
-            Column(Modifier.padding(16.dp)) {
+            Column(Modifier.padding(14.dp)) {
                 Text(
                     text = "命令  [选项]  [参数]",
                     style = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
@@ -214,7 +214,7 @@ private fun CommandAnatomyCard() {
                 Spacer(Modifier.height(12.dp))
 
                 Surface(
-                    shape = RoundedCornerShape(4.dp),
+                    shape = RoundedCornerShape(6.dp),
                     color = cs.surfaceContainerLowest
                 ) {
                     Row(

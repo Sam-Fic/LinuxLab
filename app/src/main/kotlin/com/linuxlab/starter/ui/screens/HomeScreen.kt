@@ -304,7 +304,7 @@ fun HomeScreen(
                             .clip(CircleShape)
                             .background(cs.surfaceContainerHigh)
                             .clickable(onClick = onSearch)
-                            .padding(horizontal = 18.dp, vertical = 14.dp)
+                            .padding(16.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
@@ -565,10 +565,10 @@ private fun SectionCard(spec: SectionSpec, onClick: () -> Unit) {
         shape = RoundedCornerShape(20.dp),
         color = spec.container
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
-            // 同心圆角：外卡 20.dp 与内图标块间距 14.dp，圆角差 20-14=6.dp
+        Column(modifier = Modifier.padding(12.dp)) {
+            // 同心圆角：外卡 20.dp 与内图标块间距 12.dp，圆角差 20-12=8.dp
             Surface(
-                shape = RoundedCornerShape(6.dp),
+                shape = RoundedCornerShape(8.dp),
                 color = spec.content.copy(alpha = 0.12f),
                 modifier = Modifier.size(38.dp)
             ) {
@@ -629,7 +629,7 @@ private fun DailyCard(
                         )
                     )
             )
-            Column(modifier = Modifier.padding(20.dp)) {
+            Column(modifier = Modifier.padding(18.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         Icons.Outlined.AutoAwesome,
@@ -665,12 +665,12 @@ private fun DailyCard(
                     modifier = Modifier.padding(top = 2.dp)
                 )
                 if (command.examples.isNotEmpty()) {
-                    // 同心圆角：外卡 24.dp 与代码块间距 20.dp，圆角差 24-20=4.dp
+                    // 同心圆角：外卡 24.dp 与代码块间距 18.dp，圆角差 24-18=6.dp
                     CodeBlock(
                         code = command.examples.first().code,
                         modifier = Modifier.padding(top = 14.dp),
                         onCopy = onCopy,
-                        shape = RoundedCornerShape(4.dp)
+                        shape = RoundedCornerShape(6.dp)
                     )
                 }
             }

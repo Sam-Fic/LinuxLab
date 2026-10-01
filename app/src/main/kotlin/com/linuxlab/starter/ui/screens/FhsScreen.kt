@@ -531,11 +531,11 @@ private fun DetailPanel(
     ) {
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            // 同心圆角：内层各块距卡边缘 14.dp，圆角差 18-4=14.dp
+            // 同心圆角：内层各块距卡边缘 12.dp，圆角差 18-6=12.dp
             shape = RoundedCornerShape(18.dp),
             color = cs.surfaceContainerHigh
         ) {
-            Column(Modifier.padding(14.dp)) {
+            Column(Modifier.padding(12.dp)) {
                 // 标题行：图标 + 路径 + 分类
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
@@ -554,7 +554,7 @@ private fun DetailPanel(
                         modifier = Modifier.weight(1f)
                     )
                     Surface(
-                        shape = RoundedCornerShape(4.dp),
+                        shape = RoundedCornerShape(6.dp),
                         color = cs.surfaceContainerHighest
                     ) {
                         Text(
@@ -625,7 +625,7 @@ private fun DetailPanel(
                             code = cmd,
                             modifier = Modifier.padding(bottom = 8.dp),
                             onCopy = onCopy,
-                            shape = RoundedCornerShape(4.dp),
+                            shape = RoundedCornerShape(6.dp),
                         )
                     }
                 }
@@ -635,7 +635,7 @@ private fun DetailPanel(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = 6.dp),
-                        shape = RoundedCornerShape(4.dp),
+                        shape = RoundedCornerShape(6.dp),
                         color = cs.surfaceContainerHighest
                     ) {
                         Column(Modifier.padding(12.dp)) {

@@ -379,14 +379,14 @@ private fun WallpaperCard(context: android.content.Context) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
-        // 同心圆角：缩略图块 6.dp、卡与缩略图间距 18.dp，圆角差 24-6=18.dp
+        // 同心圆角：缩略图块 8.dp、卡与缩略图间距 16.dp，圆角差 24-8=16.dp
         shape = RoundedCornerShape(24.dp),
         color = cs.surfaceContainerHigh
     ) {
-        Column(Modifier.padding(18.dp)) {
+        Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Surface(
-                    shape = RoundedCornerShape(6.dp),
+                    shape = RoundedCornerShape(8.dp),
                     color = cs.surfaceContainerHighest,
                     modifier = Modifier.size(width = 72.dp, height = 54.dp)
                 ) {

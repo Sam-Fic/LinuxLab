@@ -242,7 +242,7 @@ private fun FaqCard(
             .clickable { expanded = !expanded },
         shape = RoundedCornerShape(20.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(14.dp)) {
             Row(verticalAlignment = Alignment.Top) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
@@ -266,9 +266,9 @@ private fun FaqCard(
             }
 
             if (faq.symptom.isNotBlank()) {
-                // 同心圆角：外卡 20.dp 与内块间距 16.dp，圆角差 20-16=4.dp
+                // 同心圆角：外卡 20.dp 与内块间距 14.dp，圆角差 20-14=6.dp
                 Surface(
-                    shape = RoundedCornerShape(4.dp),
+                    shape = RoundedCornerShape(6.dp),
                     color = MaterialTheme.colorScheme.surfaceContainerHigh,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -356,8 +356,8 @@ private fun FaqCard(
                                 CodeBlock(
                                     code = step.command,
                                     onCopy = onCopy,
-                                    // 同心圆角：外卡 20.dp 与代码块间距 16.dp，圆角差 20-16=4.dp
-                                    shape = RoundedCornerShape(4.dp),
+                                    // 同心圆角：外卡 20.dp 与代码块间距 14.dp，圆角差 20-14=6.dp
+                                    shape = RoundedCornerShape(6.dp),
                                     modifier = Modifier.padding(top = 6.dp)
                                 )
                             }

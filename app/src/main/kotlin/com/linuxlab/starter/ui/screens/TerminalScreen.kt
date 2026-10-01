@@ -334,7 +334,7 @@ private fun TasksCard(
         shape = RoundedCornerShape(18.dp),
         color = MaterialTheme.colorScheme.primaryContainer
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
+        Column(modifier = Modifier.padding(12.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -369,8 +369,8 @@ private fun TasksCard(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 3.dp),
-                        // 同心圆角：外卡 18.dp 与任务块间距 14.dp，圆角差 18-14=4.dp
-                        shape = RoundedCornerShape(4.dp),
+                        // 同心圆角：外卡 18.dp 与任务块间距 12.dp，圆角差 18-12=6.dp
+                        shape = RoundedCornerShape(6.dp),
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.06f),
                         onClick = { onFill(task.example) }
                     ) {
