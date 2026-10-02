@@ -301,6 +301,7 @@ fun HomeScreen(
                 // 搜索入口（整行）
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     // M3 标准搜索入口组件（material3 SearchBar，点击跳到搜索页）
+                    // content 为展开面板：material3 1.4 无默认值，此入口不展开，传空块
                     SearchBar(
                         query = "",
                         onQueryChange = {},
@@ -311,7 +312,8 @@ fun HomeScreen(
                         leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 4.dp)
+                            .padding(bottom = 4.dp),
+                        content = {}
                     )
                 }
 
