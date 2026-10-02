@@ -360,7 +360,8 @@ fun FhsScreen(onBack: () -> Unit) {
 private fun LegendChip(kind: FhsKind) {
     val cs = MaterialTheme.colorScheme
     Surface(
-        shape = RoundedCornerShape(8.dp),
+        // 图例徽章（无交互装饰）：走主题 small 档位
+        shape = MaterialTheme.shapes.small,
         color = cs.surfaceContainerHighest
     ) {
         Row(
@@ -419,7 +420,8 @@ private fun TreeRow(
         modifier = Modifier
             .fillMaxWidth()
             .padding(start = (8 + depth * 16).dp, end = 12.dp, top = 1.dp, bottom = 1.dp),
-        shape = RoundedCornerShape(12.dp),
+        // 树形结构行：M3 无树组件，Surface+clickable 属合理例外，形状走主题 medium
+        shape = MaterialTheme.shapes.medium,
         color = rowColor
     ) {
         Row(
@@ -531,8 +533,8 @@ private fun DetailPanel(
     ) {
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            // 同心圆角：内层各块距卡边缘 12.dp，圆角差 18-6=12.dp
-            shape = RoundedCornerShape(18.dp),
+            // 同心圆角：外层 20.dp（shapes.large）、内层各块距卡边缘 12.dp，圆角差 20-8=12.dp
+            shape = MaterialTheme.shapes.large,
             color = cs.surfaceContainerHigh
         ) {
             Column(Modifier.padding(12.dp)) {
@@ -554,7 +556,7 @@ private fun DetailPanel(
                         modifier = Modifier.weight(1f)
                     )
                     Surface(
-                        shape = RoundedCornerShape(6.dp),
+                        shape = RoundedCornerShape(8.dp),
                         color = cs.surfaceContainerHighest
                     ) {
                         Text(
@@ -625,7 +627,7 @@ private fun DetailPanel(
                             code = cmd,
                             modifier = Modifier.padding(bottom = 8.dp),
                             onCopy = onCopy,
-                            shape = RoundedCornerShape(6.dp),
+                            shape = RoundedCornerShape(8.dp),
                         )
                     }
                 }
@@ -635,7 +637,7 @@ private fun DetailPanel(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = 6.dp),
-                        shape = RoundedCornerShape(6.dp),
+                        shape = RoundedCornerShape(8.dp),
                         color = cs.surfaceContainerHighest
                     ) {
                         Column(Modifier.padding(12.dp)) {

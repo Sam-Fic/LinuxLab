@@ -18,7 +18,6 @@
 
 package com.linuxlab.starter.ui.screens
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -48,6 +47,8 @@ import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -178,7 +179,8 @@ private fun CommandAnatomyCard() {
     Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Surface(
-                shape = RoundedCornerShape(10.dp),
+                // 品牌图标装饰块：走主题 small 档位
+                shape = MaterialTheme.shapes.small,
                 color = cs.primaryContainer,
                 modifier = Modifier.size(34.dp)
             ) {
@@ -201,8 +203,8 @@ private fun CommandAnatomyCard() {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 10.dp),
-            // 同心圆角：内层语法块距卡边缘 14.dp，圆角差 20-6=14.dp
-            shape = RoundedCornerShape(20.dp),
+            // 同心圆角：外层 20.dp（shapes.large）、内层语法块距卡边缘 14.dp，圆角差 20-6=14.dp
+            shape = MaterialTheme.shapes.large,
             color = cs.surfaceContainerHigh
         ) {
             Column(Modifier.padding(14.dp)) {
@@ -301,13 +303,13 @@ private fun CollapsibleHeader(
     modifier: Modifier = Modifier
 ) {
     val cs = MaterialTheme.colorScheme
-    Surface(
+    Card(
+        onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp)
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(14.dp),
-        color = cs.surfaceContainerHigh
+            .padding(horizontal = 16.dp, vertical = 6.dp),
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors(containerColor = cs.surfaceContainerHigh)
     ) {
         Row(
             modifier = Modifier
@@ -354,7 +356,7 @@ private fun StudyStepCard(step: StudyStep, onCategory: (String) -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 5.dp),
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.large,
         color = cs.surfaceContainerHigh
     ) {
         Column(Modifier.padding(14.dp)) {
@@ -401,7 +403,6 @@ private fun StudyStepCard(step: StudyStep, onCategory: (String) -> Unit) {
                                 style = MaterialTheme.typography.labelMedium
                             )
                         },
-                        shape = RoundedCornerShape(8.dp),
                         colors = AssistChipDefaults.assistChipColors(
                             containerColor = cs.tertiaryContainer,
                             labelColor = cs.onTertiaryContainer
@@ -420,7 +421,7 @@ private fun FooterHint() {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 10.dp),
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.large,
         color = cs.secondaryContainer
     ) {
         Column(Modifier.padding(14.dp)) {

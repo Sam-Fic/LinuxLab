@@ -96,7 +96,9 @@ val AppTypography = Typography()
 /**
  * Material 3 标准形状体系（五个档位）。
  *
- * 与 M3 默认 Shapes 取值一致：extraSmall 4 / small 8 / medium 12 / large 16 / extraLarge 28。
+ * 形状按 M3 Expressive（m3.material.io，2025.05）increased token 语义映射：
+ * large = 20dp（官方 Large increased 20dp）、extraLarge = 32dp（官方 Extra large increased 32dp），
+ * extraSmall/small/medium 保持 M3 默认（4/8/12）。组件默认形状随主题整体抬升。
  * 显式声明并注入 MaterialTheme，让所有标准组件（按钮、卡片、输入框、FAB 等）
  * 都能通过 `MaterialTheme.shapes` 语义化取形状，而不是散落的硬编码圆角。
  *
@@ -108,8 +110,8 @@ val AppShapes =
         extraSmall = RoundedCornerShape(4.dp),
         small = RoundedCornerShape(8.dp),
         medium = RoundedCornerShape(12.dp),
-        large = RoundedCornerShape(16.dp),
-        extraLarge = RoundedCornerShape(28.dp),
+        large = RoundedCornerShape(20.dp),
+        extraLarge = RoundedCornerShape(32.dp),
     )
 
 /**

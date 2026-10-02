@@ -216,9 +216,9 @@ fun OnboardingScreen(onFinish: () -> Unit) {
                             pagerState.animateScrollToPage(pagerState.currentPage + 1)
                         }
                     },
+                    // M3 标准 FilledButton：不覆盖高度（默认 40dp），shape 默认 full
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(54.dp)
                 ) {
                     Text(
                         text = if (isLast) "开始使用" else "继续",
@@ -271,9 +271,9 @@ private fun PageContent(page: OnboardingPage, active: Boolean) {
             label = "pulseValue"
         )
 
-        // 图标：渐变圆底 + 呼吸缩放
+        // 图标：渐变圆底 + 呼吸缩放（品牌装饰块，形状走主题 extraLarge）
         Surface(
-            shape = RoundedCornerShape(30.dp),
+            shape = MaterialTheme.shapes.extraLarge,
             color = cs.primaryContainer,
             modifier = Modifier
                 .size(104.dp)
@@ -339,7 +339,7 @@ private fun PageContent(page: OnboardingPage, active: Boolean) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
+                        .clip(MaterialTheme.shapes.large)
                         .background(cs.surfaceContainerHigh.copy(alpha = 0.75f))
                         .padding(horizontal = 16.dp, vertical = 14.dp)
                         .reveal(entered, delay = 200 + index * 70),

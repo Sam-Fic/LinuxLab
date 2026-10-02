@@ -107,7 +107,7 @@ fun CategoryScreen(
                 Surface(
                     modifier = Modifier
                         .padding(horizontal = 16.dp, vertical = 12.dp),
-                    shape = RoundedCornerShape(20.dp),
+                    shape = MaterialTheme.shapes.large,
                     color = MaterialTheme.colorScheme.secondaryContainer
                 ) {
                     Row(

@@ -33,7 +33,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.ContentCopy
@@ -155,7 +154,8 @@ fun DetailScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp, vertical = 12.dp),
-                        shape = RoundedCornerShape(18.dp),
+                        // 说明内容容器：形状走主题 token
+                        shape = MaterialTheme.shapes.large,
                         color = MaterialTheme.colorScheme.surfaceContainerHigh
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
@@ -202,7 +202,8 @@ fun DetailScreen(
                             .padding(horizontal = 20.dp, vertical = 8.dp)
                     ) {
                         Surface(
-                            shape = RoundedCornerShape(8.dp),
+                            // 参数标签徽章：走主题 small 档位
+                            shape = MaterialTheme.shapes.small,
                             color = MaterialTheme.colorScheme.primaryContainer
                         ) {
                             Text(
@@ -281,7 +282,8 @@ fun DetailScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp, vertical = 5.dp),
-                        shape = RoundedCornerShape(16.dp),
+                        // 提示内容容器：形状走主题 token
+                        shape = MaterialTheme.shapes.large,
                         color = MaterialTheme.colorScheme.tertiaryContainer
                     ) {
                         Row(modifier = Modifier.padding(14.dp)) {
@@ -347,7 +349,8 @@ private fun HeaderBlock(command: Command) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 12.dp),
-        shape = RoundedCornerShape(24.dp),
+        // 头部大卡：形状走主题 extraLarge 档位
+        shape = MaterialTheme.shapes.extraLarge,
         color = MaterialTheme.colorScheme.primaryContainer
     ) {
         Column(modifier = Modifier.padding(20.dp)) {

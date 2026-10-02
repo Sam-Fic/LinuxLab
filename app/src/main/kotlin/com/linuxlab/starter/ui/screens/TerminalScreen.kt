@@ -153,7 +153,8 @@ fun TerminalScreen() {
                 .fillMaxWidth()
                 .weight(1f)
                 .padding(horizontal = 12.dp),
-            shape = RoundedCornerShape(16.dp),
+            // 终端输出区：主题 shapes.large 语义化（终端专用容器）
+            shape = MaterialTheme.shapes.large,
             color = MaterialTheme.colorScheme.surfaceContainerHighest
         ) {
             LazyColumn(
@@ -185,7 +186,8 @@ fun TerminalScreen() {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 12.dp, vertical = 8.dp),
-            shape = RoundedCornerShape(14.dp),
+            // 终端输入行：主题 shapes.medium 语义化（终端专用容器）
+            shape = MaterialTheme.shapes.medium,
             color = MaterialTheme.colorScheme.surfaceContainerHigh
         ) {
             Row(
@@ -259,7 +261,6 @@ fun TerminalScreen() {
                             )
                         )
                     },
-                    shape = RoundedCornerShape(10.dp),
                     colors = AssistChipDefaults.assistChipColors(
                         containerColor = MaterialTheme.colorScheme.secondaryContainer,
                         labelColor = MaterialTheme.colorScheme.onSecondaryContainer
@@ -331,7 +332,7 @@ private fun TasksCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 6.dp),
-        shape = RoundedCornerShape(18.dp),
+        shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.primaryContainer
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
@@ -369,8 +370,8 @@ private fun TasksCard(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 3.dp),
-                        // 同心圆角：外卡 18.dp 与任务块间距 12.dp，圆角差 18-12=6.dp
-                        shape = RoundedCornerShape(6.dp),
+                        // 同心圆角：外卡 20.dp（shapes.large）与任务块间距 12.dp，圆角差 20-12=8.dp
+                        shape = RoundedCornerShape(8.dp),
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.06f),
                         onClick = { onFill(task.example) }
                     ) {

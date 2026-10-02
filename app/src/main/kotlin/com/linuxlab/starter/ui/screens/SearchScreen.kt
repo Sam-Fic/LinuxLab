@@ -42,6 +42,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -208,36 +209,35 @@ fun SearchScreen(
                         .weight(1f, fill = false)
                 ) {
                     items(faqHits, key = { it.id }) { faq ->
-                        Surface(
+                        // M3 标准列表项（ListView 行组件）+ clickable（1.4.0 ListItem 无内置 onClick）
+                        ListItem(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable { onFaq(query) },
-                            color = Color.Transparent
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp)
-                            ) {
+                            headlineContent = {
                                 Text(
                                     text = faq.title,
                                     style = MaterialTheme.typography.titleSmall,
                                     color = MaterialTheme.colorScheme.primary
                                 )
-                                if (faq.symptom.isNotBlank()) {
+                            },
+                            supportingContent = {
+                                Column {
+                                    if (faq.symptom.isNotBlank()) {
+                                        Text(
+                                            text = faq.symptom,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
                                     Text(
-                                        text = faq.symptom,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.padding(top = 2.dp)
+                                        text = Repository.faqCategoryZh(faq.categoryId) + " · 查看处理办法",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.tertiary
                                     )
                                 }
-                                Text(
-                                    text = Repository.faqCategoryZh(faq.categoryId) + " · 查看处理办法",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.tertiary,
-                                    modifier = Modifier.padding(top = 4.dp)
-                                )
                             }
-                        }
+                        )
                         androidx.compose.material3.HorizontalDivider(
                             modifier = Modifier.padding(horizontal = 20.dp),
                             color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)

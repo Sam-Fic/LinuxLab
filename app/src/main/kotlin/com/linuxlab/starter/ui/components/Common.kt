@@ -117,11 +117,12 @@ fun CodeBlock(
     code: String,
     modifier: Modifier = Modifier,
     onCopy: (String) -> Unit = {},
-    shape: Shape = RoundedCornerShape(12.dp)
+    /** 容器形状：null 时取主题 token（默认参数无法求值 @Composable，故用可空 + 运行时兜底） */
+    shape: Shape? = null
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = shape,
+        shape = shape ?: MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surfaceContainerHigh
     ) {
         Row(
@@ -185,7 +186,7 @@ fun CategoryCard(
     ElevatedCard(
         modifier = modifier,
         onClick = onClick,
-        shape = RoundedCornerShape(20.dp)
+        shape = MaterialTheme.shapes.large
     ) {
         Column(
             modifier = Modifier

@@ -105,6 +105,7 @@ import androidx.compose.ui.unit.sp
 import com.linuxlab.starter.terminal.TerminalSession
 import com.linuxlab.starter.terminal.ui.TerminalView
 
+// 真实终端渲染专用前景/背景色（终端模拟器不套用 M3 配色，属合理例外）
 private val TermBackground = Color(0xFF0B0F0D)
 private val TermForeground = Color(0xFFE8F1EC)
 
@@ -369,7 +370,6 @@ fun RealTerminalScreen(
                                         )
                                     )
                                 },
-                                shape = RoundedCornerShape(8.dp),
                                 colors = AssistChipDefaults.assistChipColors(
                                     containerColor = MaterialTheme.colorScheme.secondaryContainer,
                                     labelColor = MaterialTheme.colorScheme.onSecondaryContainer
@@ -436,7 +436,8 @@ private val quickCommands = listOf(
 private fun KeyButton(label: String, onClick: () -> Unit) {
     Surface(
         onClick = onClick,
-        shape = RoundedCornerShape(8.dp),
+        // 终端虚拟键盘键：主题 small 档位语义化（终端专用部件）
+        shape = MaterialTheme.shapes.small,
         color = MaterialTheme.colorScheme.secondaryContainer
     ) {
         Text(
@@ -452,7 +453,7 @@ private fun KeyButton(label: String, onClick: () -> Unit) {
 private fun KeyToggle(text: String, active: Boolean, onToggle: () -> Unit) {
     Surface(
         onClick = onToggle,
-        shape = RoundedCornerShape(8.dp),
+        shape = MaterialTheme.shapes.small,
         color = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
     ) {
         Text(
@@ -531,7 +532,8 @@ private fun FailedView(
         )
         if (log.isNotEmpty()) {
             Surface(
-                shape = RoundedCornerShape(12.dp),
+                // 终端日志面板：主题 medium 语义化（终端专用容器）
+                shape = MaterialTheme.shapes.medium,
                 color = TermBackground,
                 modifier = Modifier
                     .fillMaxWidth()

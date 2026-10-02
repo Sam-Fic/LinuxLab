@@ -19,7 +19,6 @@
 package com.linuxlab.starter.ui.screens
 
 import android.os.Build
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.Image
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Slider
@@ -52,7 +51,10 @@ import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -122,7 +124,7 @@ fun AboutScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp),
-                    shape = RoundedCornerShape(20.dp),
+                    shape = MaterialTheme.shapes.large,
                     color = MaterialTheme.colorScheme.primaryContainer
                 ) {
                     Row(
@@ -197,7 +199,7 @@ fun AboutScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp),
-                    shape = RoundedCornerShape(20.dp),
+                    shape = MaterialTheme.shapes.large,
                     color = MaterialTheme.colorScheme.surfaceContainerHigh
                 ) {
                     Column(modifier = Modifier.padding(18.dp)) {
@@ -226,13 +228,15 @@ fun AboutScreen(
             item { SectionTitle("开源许可 / Licenses") }
 
             item {
-                Surface(
+                Card(
+                    onClick = { showLicenses = true },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 4.dp)
-                        .clickable { showLicenses = true },
-                    shape = RoundedCornerShape(14.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerHigh
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                    shape = MaterialTheme.shapes.medium,
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                    )
                 ) {
                     Row(
                         modifier = Modifier.padding(16.dp),
@@ -260,33 +264,23 @@ fun AboutScreen(
 
             items(Repository.groups.size) { i ->
                 val group = Repository.groups[i]
-                Surface(
+                ListItem(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 4.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerHigh
-                ) {
-                    Row(
-                        modifier = Modifier.padding(14.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        CategoryIcon(key = group.icon, modifier = Modifier.size(22.dp))
-                        Column(modifier = Modifier.padding(start = 12.dp).weight(1f)) {
-                            Text(group.zh, style = MaterialTheme.typography.bodyLarge)
-                            Text(
-                                group.en,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
+                    leadingContent = { CategoryIcon(key = group.icon, modifier = Modifier.size(22.dp)) },
+                    headlineContent = { Text(group.zh, style = MaterialTheme.typography.bodyLarge) },
+                    supportingContent = {
+                        Text(group.en, style = MaterialTheme.typography.bodySmall)
+                    },
+                    trailingContent = {
                         Text(
                             "${group.commands.size}",
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.primary
                         )
                     }
-                }
+                )
             }
 
             item {
@@ -294,7 +288,7 @@ fun AboutScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp),
-                    shape = RoundedCornerShape(20.dp),
+                    shape = MaterialTheme.shapes.large,
                     color = MaterialTheme.colorScheme.tertiaryContainer
                 ) {
                     Row(modifier = Modifier.padding(16.dp)) {
@@ -379,14 +373,14 @@ private fun WallpaperCard(context: android.content.Context) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
-        // 同心圆角：缩略图块 8.dp、卡与缩略图间距 16.dp，圆角差 24-8=16.dp
-        shape = RoundedCornerShape(24.dp),
+        // 同心圆角：外层 32.dp（shapes.extraLarge）、卡与缩略图间距 16.dp，圆角差 32-16=16.dp
+        shape = MaterialTheme.shapes.extraLarge,
         color = cs.surfaceContainerHigh
     ) {
         Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Surface(
-                    shape = RoundedCornerShape(8.dp),
+                    shape = RoundedCornerShape(16.dp),
                     color = cs.surfaceContainerHighest,
                     modifier = Modifier.size(width = 72.dp, height = 54.dp)
                 ) {

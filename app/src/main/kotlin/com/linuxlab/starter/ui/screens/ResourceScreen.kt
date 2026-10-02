@@ -204,7 +204,9 @@ private fun LinkRow(
         modifier = modifier
             .fillMaxWidth()
             .combinedClickable(onClick = onClick, onLongClick = onLongClick),
-        shape = RoundedCornerShape(16.dp),
+        // 资源链接行：M3 无长按卡片组件（Card 仅支持 onClick），保留 combinedClickable 属合理例外，
+        // 形状走主题 token（shapes.large）
+        shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surfaceContainerHigh
     ) {
         Row(

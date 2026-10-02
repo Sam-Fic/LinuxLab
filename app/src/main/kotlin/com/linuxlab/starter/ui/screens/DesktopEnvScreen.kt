@@ -19,7 +19,6 @@
 package com.linuxlab.starter.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,6 +39,8 @@ import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Computer
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -124,13 +125,13 @@ fun DesktopEnvScreen(
 @Composable
 private fun DesktopEnvCard(env: DesktopEnv, onClick: () -> Unit) {
     val cs = MaterialTheme.colorScheme
-    Surface(
+    Card(
+        onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp)
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(20.dp),
-        color = cs.surfaceContainerHigh
+            .padding(horizontal = 16.dp, vertical = 6.dp),
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = cs.surfaceContainerHigh)
     ) {
         Column(Modifier.padding(6.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -150,7 +151,6 @@ private fun DesktopEnvCard(env: DesktopEnv, onClick: () -> Unit) {
                 AssistChip(
                     onClick = onClick,
                     label = { Text(env.toolkit, style = MaterialTheme.typography.labelSmall) },
-                    shape = RoundedCornerShape(8.dp),
                     colors = AssistChipDefaults.assistChipColors(
                         containerColor = cs.secondaryContainer,
                         labelColor = cs.onSecondaryContainer
@@ -298,7 +298,7 @@ fun DesktopEnvDetailScreen(id: String, onBack: () -> Unit) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 4.dp),
-                    shape = RoundedCornerShape(16.dp),
+                    shape = MaterialTheme.shapes.large,
                     color = cs.primaryContainer
                 ) {
                     Text(
@@ -316,7 +316,7 @@ fun DesktopEnvDetailScreen(id: String, onBack: () -> Unit) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 4.dp),
-                    shape = RoundedCornerShape(16.dp),
+                    shape = MaterialTheme.shapes.large,
                     color = cs.surfaceContainerHigh
                 ) {
                     Column(Modifier.padding(14.dp)) {
@@ -362,7 +362,7 @@ fun DesktopEnvDetailScreen(id: String, onBack: () -> Unit) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 4.dp),
-                    shape = RoundedCornerShape(16.dp),
+                    shape = MaterialTheme.shapes.large,
                     color = cs.tertiaryContainer
                 ) {
                     Column(Modifier.padding(14.dp)) {
@@ -438,8 +438,8 @@ private fun KeyRow(binding: KeyBinding) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 3.dp),
-        // 同心圆角：内层键帽 8.dp 与间距 10.dp，圆角差 18-8=10.dp
-        shape = RoundedCornerShape(18.dp),
+        // 同心圆角：外层 20.dp（shapes.large）、内层键帽 10.dp 与间距 10.dp，圆角差 20-10=10.dp
+        shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surfaceContainerHigh
     ) {
         Row(
@@ -447,7 +447,7 @@ private fun KeyRow(binding: KeyBinding) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Surface(
-                shape = RoundedCornerShape(8.dp),
+                shape = RoundedCornerShape(10.dp),
                 color = MaterialTheme.colorScheme.secondaryContainer
             ) {
                 Text(

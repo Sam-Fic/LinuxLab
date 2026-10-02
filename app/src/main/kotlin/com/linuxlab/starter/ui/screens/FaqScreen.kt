@@ -19,7 +19,6 @@
 package com.linuxlab.starter.ui.screens
 
 import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -236,11 +235,11 @@ private fun FaqCard(
     var expanded by remember { mutableStateOf(false) }
 
     ElevatedCard(
+        onClick = { expanded = !expanded },
         modifier = modifier
             .fillMaxWidth()
-            .animateContentSize()
-            .clickable { expanded = !expanded },
-        shape = RoundedCornerShape(20.dp)
+            .animateContentSize(),
+        shape = MaterialTheme.shapes.large
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
             Row(verticalAlignment = Alignment.Top) {

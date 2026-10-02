@@ -73,21 +73,23 @@ fun DesktopDiagram(
     spec: LayoutSpec,
     modifier: Modifier = Modifier,
     detailed: Boolean = false,
-    // 同心圆角：示意图是嵌套色块，允许外层容器按同心原则指定内层圆角
-    shape: Shape = RoundedCornerShape(12.dp)
+    // 同心圆角：示意图是嵌套色块，允许外层容器按同心原则指定内层圆角；
+    // null 时取主题 token（默认参数无法求值 @Composable，用可空 + 运行时兜底）
+    shape: Shape? = null
 ) {
     val cs = MaterialTheme.colorScheme
     val t = tintOf(cs, spec.tint)
     // 桌面底色：在各桌面统一的浅底上，混一点该桌面环境的主色，远看就能分辨
     val desk = lerp(cs.surfaceContainerHighest, t.panel, 0.18f)
     val marks = marksOf(spec)
+    val shapeResolved = shape ?: MaterialTheme.shapes.medium
 
     Column(
         modifier
             .aspectRatio(16f / 10f)
-            .clip(shape)
+            .clip(shapeResolved)
             .background(desk)
-            .border(1.dp, cs.outlineVariant, shape)
+            .border(1.dp, cs.outlineVariant, shapeResolved)
     ) {
         if (spec.panel == PanelPos.TOP || spec.panel == PanelPos.BOTH) {
             PanelBar(spec, t, isTop = true, mark = marks.topPanel, detailed = detailed)

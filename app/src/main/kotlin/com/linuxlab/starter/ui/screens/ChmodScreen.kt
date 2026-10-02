@@ -169,7 +169,7 @@ fun ChmodScreen(onBack: () -> Unit) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 10.dp),
-                    shape = RoundedCornerShape(20.dp),
+                    shape = MaterialTheme.shapes.large,
                     color = cs.primaryContainer
                 ) {
                     Column(
@@ -244,15 +244,13 @@ fun ChmodScreen(onBack: () -> Unit) {
                         FilterChip(
                             selected = !isDir,
                             onClick = { isDir = false },
-                            label = { Text("作用于文件", style = MaterialTheme.typography.labelMedium) },
-                            shape = RoundedCornerShape(8.dp)
+                            label = { Text("作用于文件", style = MaterialTheme.typography.labelMedium) }
                         )
                         Spacer(Modifier.width(8.dp))
                         FilterChip(
                             selected = isDir,
                             onClick = { isDir = true },
-                            label = { Text("作用于目录", style = MaterialTheme.typography.labelMedium) },
-                            shape = RoundedCornerShape(8.dp)
+                            label = { Text("作用于目录", style = MaterialTheme.typography.labelMedium) }
                         )
                     }
                     OutlinedTextField(
@@ -309,7 +307,6 @@ fun ChmodScreen(onBack: () -> Unit) {
                                 special = preset.special
                             },
                             label = { Text(preset.label, style = MaterialTheme.typography.labelMedium) },
-                            shape = RoundedCornerShape(8.dp),
                             colors = if (preset.danger) {
                                 FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = cs.errorContainer,
@@ -330,7 +327,7 @@ fun ChmodScreen(onBack: () -> Unit) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 4.dp),
-                    shape = RoundedCornerShape(16.dp),
+                    shape = MaterialTheme.shapes.large,
                     color = cs.surfaceContainerHigh
                 ) {
                     Column(Modifier.padding(14.dp)) {
@@ -363,7 +360,7 @@ fun ChmodScreen(onBack: () -> Unit) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 4.dp),
-                    shape = RoundedCornerShape(16.dp),
+                    shape = MaterialTheme.shapes.large,
                     color = cs.surfaceContainerHigh
                 ) {
                     Column(Modifier.padding(14.dp)) {
@@ -382,8 +379,8 @@ fun ChmodScreen(onBack: () -> Unit) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 4.dp),
-                    // 同心圆角：内层代码块距卡边缘 12.dp，圆角差 18-6=12.dp
-                    shape = RoundedCornerShape(18.dp),
+                    // 同心圆角：外层 20.dp（shapes.large）、内层代码块距卡边缘 12.dp，圆角差 20-8=12.dp
+                    shape = MaterialTheme.shapes.large,
                     color = cs.errorContainer
                 ) {
                     Column(Modifier.padding(12.dp)) {
@@ -425,7 +422,7 @@ fun ChmodScreen(onBack: () -> Unit) {
                             code = "stat -c '%a %n' $name",
                             modifier = Modifier.padding(top = 12.dp),
                             onCopy = copy,
-                            shape = RoundedCornerShape(6.dp)
+                            shape = RoundedCornerShape(8.dp)
                         )
                     }
                 }
@@ -446,7 +443,7 @@ private fun PermRow(
     val cs = MaterialTheme.colorScheme
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.large,
         color = cs.surfaceContainerHigh
     ) {
         Column(Modifier.padding(14.dp)) {
@@ -495,7 +492,6 @@ private fun PermChip(
             }
         },
         modifier = modifier,
-        shape = RoundedCornerShape(10.dp),
         colors = FilterChipDefaults.filterChipColors(
             selectedContainerColor = tint,
             selectedLabelColor = cs.surface
@@ -520,8 +516,7 @@ private fun SpecialBitRow(
         FilterChip(
             selected = checked,
             onClick = onToggle,
-            label = { Text(label, style = MaterialTheme.typography.labelMedium) },
-            shape = RoundedCornerShape(8.dp)
+            label = { Text(label, style = MaterialTheme.typography.labelMedium) }
         )
         Text(
             text = desc,

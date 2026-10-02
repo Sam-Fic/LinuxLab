@@ -25,7 +25,6 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -48,7 +47,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
@@ -60,11 +58,14 @@ import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material.icons.outlined.Terminal
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -250,7 +251,8 @@ fun HomeScreen(
                     title = {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Surface(
-                                shape = RoundedCornerShape(10.dp),
+                                // 品牌图标装饰块：走主题 small 档位
+                                shape = MaterialTheme.shapes.small,
                                 color = cs.primaryContainer,
                                 modifier = Modifier.size(34.dp)
                             ) {
@@ -298,29 +300,19 @@ fun HomeScreen(
             ) {
                 // 搜索入口（整行）
                 item(span = { GridItemSpan(maxLineSpan) }) {
-                    Box(
+                    // M3 标准搜索入口组件（material3 SearchBar，点击跳到搜索页）
+                    SearchBar(
+                        query = "",
+                        onQueryChange = {},
+                        onSearch = { onSearch() },
+                        active = false,
+                        onActiveChange = { if (it) onSearch() },
+                        placeholder = { Text("搜索命令、参数或示例…") },
+                        leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(bottom = 4.dp)
-                            .clip(CircleShape)
-                            .background(cs.surfaceContainerHigh)
-                            .clickable(onClick = onSearch)
-                            .padding(16.dp)
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                Icons.Outlined.Search,
-                                contentDescription = null,
-                                tint = cs.onSurfaceVariant
-                            )
-                            Spacer(Modifier.width(12.dp))
-                            Text(
-                                text = "搜索命令、参数或示例…",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = cs.onSurfaceVariant
-                            )
-                        }
-                    }
+                    )
                 }
 
                 // 今日推荐：整行大卡
@@ -558,13 +550,13 @@ private fun sectionSpec(id: String, favCount: Int): SectionSpec {
 
 @Composable
 private fun SectionCard(spec: SectionSpec, onClick: () -> Unit) {
-    Surface(
+    Card(
+        onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .height(GRID_CARD_HEIGHT)
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(20.dp),
-        color = spec.container
+            .height(GRID_CARD_HEIGHT),
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = spec.container)
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             // 同心圆角：外卡 20.dp 与内图标块间距 12.dp，圆角差 20-12=8.dp
@@ -609,15 +601,15 @@ private fun DailyCard(
     onClick: () -> Unit
 ) {
     val cs = MaterialTheme.colorScheme
-    Surface(
+    Card(
+        onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
             // 自身不再加左右内边距：网格的 contentPadding(14dp) 已经决定了
             // 左右边缘，这样大卡与下方两列卡片的外沿正好对齐
-            .padding(vertical = 8.dp)
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(24.dp),
-        color = cs.primaryContainer
+            .padding(vertical = 8.dp),
+        shape = MaterialTheme.shapes.extraLarge,
+        colors = CardDefaults.cardColors(containerColor = cs.primaryContainer)
     ) {
         Box {
             // 轻微渐变，让每日推荐更有层次（颜色全部来自莫奈调色板）
@@ -666,12 +658,12 @@ private fun DailyCard(
                     modifier = Modifier.padding(top = 2.dp)
                 )
                 if (command.examples.isNotEmpty()) {
-                    // 同心圆角：外卡 24.dp 与代码块间距 18.dp，圆角差 24-18=6.dp
+                    // 同心圆角：外卡 32.dp（shapes.extraLarge）与代码块间距 18.dp，圆角差 32-18=14.dp
                     CodeBlock(
                         code = command.examples.first().code,
                         modifier = Modifier.padding(top = 14.dp),
                         onCopy = onCopy,
-                        shape = RoundedCornerShape(6.dp)
+                        shape = RoundedCornerShape(14.dp)
                     )
                 }
             }
@@ -711,7 +703,8 @@ private fun StatsRow() {
 private fun StatCard(value: String, label: String, modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(18.dp),
+        // 统计展示容器：形状走主题 token（shapes.large）
+        shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surfaceContainerHigh
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
