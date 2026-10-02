@@ -174,12 +174,13 @@ private fun secondaryFeature(spec: LayoutSpec): String =
 
 @Composable
 private fun Marker(text: String, t: Tint, modifier: Modifier = Modifier) {
+    val cs = MaterialTheme.colorScheme
     Box(
         modifier
             .size(12.dp)
             .clip(CircleShape)
             .background(t.panel)
-            .border(1.dp, Color.White.copy(alpha = 0.75f), CircleShape),
+            .border(1.dp, cs.outline.copy(alpha = 0.75f), CircleShape),
         contentAlignment = Alignment.Center
     ) {
         Text(

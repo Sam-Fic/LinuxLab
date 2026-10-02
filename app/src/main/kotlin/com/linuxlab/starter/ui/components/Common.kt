@@ -44,6 +44,7 @@ import androidx.compose.material.icons.outlined.Storage
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -58,6 +59,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import android.widget.Toast
 import androidx.compose.foundation.clickable
@@ -217,7 +219,7 @@ fun CategoryCard(
     }
 }
 
-/** 搜索结果 / 分类列表里的命令条目 */
+/** 搜索结果 / 分类列表里的命令条目（Material 3 标准 ListItem） */
 @Composable
 fun CommandRow(
     command: Command,
@@ -228,57 +230,56 @@ fun CommandRow(
     onToggleFavorite: (() -> Unit)? = null,
     onClick: () -> Unit
 ) {
-    Surface(
+    ListItem(
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        color = Color.Transparent
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+        headlineContent = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = command.name,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontFamily = FontFamily.Monospace
+                    ),
+                    color = MaterialTheme.colorScheme.primary
+                )
+                if (command.level == Level.ADVANCED) {
                     Text(
-                        text = command.name,
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontFamily = FontFamily.Monospace
-                        ),
-                        color = MaterialTheme.colorScheme.primary
+                        text = " 进阶",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.tertiary
                     )
-                    if (command.level == Level.ADVANCED) {
-                        Text(
-                            text = " 进阶",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.tertiary
-                        )
-                    }
                 }
+            }
+        },
+        supportingContent = {
+            Column(
+                modifier = Modifier.padding(top = 2.dp),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
                 Text(
                     text = command.zh,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(top = 2.dp)
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = command.en,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 1.dp)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                if (showCategory) {
+                if (showCategory && command.categoryZh.isNotEmpty()) {
                     Text(
                         text = command.categoryZh,
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 4.dp)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
-            if (favorite != null && onToggleFavorite != null) {
+        },
+        trailingContent = if (favorite != null && onToggleFavorite != null) {
+            {
                 IconButton(onClick = onToggleFavorite) {
                     Icon(
                         imageVector = if (favorite) Icons.Outlined.Star else Icons.Outlined.StarOutline,
@@ -291,6 +292,8 @@ fun CommandRow(
                     )
                 }
             }
+        } else {
+            null
         }
-    }
+    )
 }

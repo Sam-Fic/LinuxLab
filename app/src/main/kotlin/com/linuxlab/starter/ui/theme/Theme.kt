@@ -20,7 +20,9 @@ package com.linuxlab.starter.ui.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
@@ -29,6 +31,7 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 
 /** 主题模式 */
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
@@ -91,6 +94,25 @@ private val DarkColors = darkColorScheme(
 val AppTypography = Typography()
 
 /**
+ * Material 3 标准形状体系（五个档位）。
+ *
+ * 与 M3 默认 Shapes 取值一致：extraSmall 4 / small 8 / medium 12 / large 16 / extraLarge 28。
+ * 显式声明并注入 MaterialTheme，让所有标准组件（按钮、卡片、输入框、FAB 等）
+ * 都能通过 `MaterialTheme.shapes` 语义化取形状，而不是散落的硬编码圆角。
+ *
+ * 注意：项目卡片/列表存在「同心圆角」设计约束（内层圆角 = 外层圆角 − 间距），
+ * 自定义圆角仍按该约束在组件内显式指定，不受本档位影响。
+ */
+val AppShapes =
+    Shapes(
+        extraSmall = RoundedCornerShape(4.dp),
+        small = RoundedCornerShape(8.dp),
+        medium = RoundedCornerShape(12.dp),
+        large = RoundedCornerShape(16.dp),
+        extraLarge = RoundedCornerShape(28.dp),
+    )
+
+/**
  * Material 3 + 莫奈（Monet）动态取色主题。
  *
  * - Android 12（API 31）及以上且开启了「动态取色」时，
@@ -123,6 +145,7 @@ fun LinuxStarterTheme(
     MaterialTheme(
         colorScheme = colorScheme,
         typography = AppTypography,
+        shapes = AppShapes,
         content = content
     )
 }

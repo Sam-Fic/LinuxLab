@@ -49,8 +49,7 @@ import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.RocketLaunch
 import androidx.compose.material.icons.outlined.Terminal
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilledButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -146,6 +145,7 @@ fun OnboardingScreen(onFinish: () -> Unit) {
     val cs = MaterialTheme.colorScheme
     val isLast = pagerState.currentPage == pages.size - 1
 
+    // 透明 Scaffold：由外层 AppNav 铺壁纸/主题底色，引导页保持通透（合理例外）
     Scaffold(containerColor = Color.Transparent) { padding ->
         Box(
             modifier = Modifier
@@ -208,8 +208,8 @@ fun OnboardingScreen(onFinish: () -> Unit) {
                     }
                 }
 
-                // 主按钮
-                Button(
+                // 主按钮（M3 FilledButton：默认全圆角、primary/onPrimary 配色）
+                FilledButton(
                     onClick = {
                         if (isLast) onFinish()
                         else scope.launch {
@@ -218,12 +218,7 @@ fun OnboardingScreen(onFinish: () -> Unit) {
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(54.dp),
-                    shape = RoundedCornerShape(18.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = cs.primary,
-                        contentColor = cs.onPrimary
-                    )
+                        .height(54.dp)
                 ) {
                     Text(
                         text = if (isLast) "开始使用" else "继续",

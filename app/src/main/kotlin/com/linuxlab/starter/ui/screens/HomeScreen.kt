@@ -280,6 +280,7 @@ fun HomeScreen(
                             Icon(Icons.Outlined.Palette, contentDescription = "外观设置")
                         }
                     },
+                    // M3 默认 TopAppBar 就是 surface 容器色；这里显式标注，配合透明 Scaffold 叠在壁纸上（合理例外）
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = cs.surface)
                 )
             }
