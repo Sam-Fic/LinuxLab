@@ -49,7 +49,7 @@ import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.RocketLaunch
 import androidx.compose.material.icons.outlined.Terminal
-import androidx.compose.material3.FilledButton
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -208,8 +208,8 @@ fun OnboardingScreen(onFinish: () -> Unit) {
                     }
                 }
 
-                // 主按钮（M3 FilledButton：默认全圆角、primary/onPrimary 配色）
-                FilledButton(
+                // 主按钮（M3 filled button 语义，material3 1.4 中标准组件名为 Button）
+                Button(
                     onClick = {
                         if (isLast) onFinish()
                         else scope.launch {
