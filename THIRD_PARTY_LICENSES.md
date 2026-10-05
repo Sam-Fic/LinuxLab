@@ -39,42 +39,9 @@ App 内置的 Linux 运行环境由下列第三方自由软件组成，它们保
 | Material Symbols & Icons | Apache-2.0 — <https://fonts.google.com/icons> |
 | Kotlin / kotlinx-coroutines | Apache-2.0 — <https://github.com/JetBrains/kotlin> |
 
-## 5. 液态玻璃效果 —— Backdrop（Apache-2.0）
+## 5. 其他
 
-底栏的液态玻璃效果基于 [Kyant0/AndroidLiquidGlass](https://github.com/Kyant0/AndroidLiquidGlass)
-（Copyright 2025 Kyant，**Apache License 2.0**）。
-
-| 组成 | 引入方式 | 许可证 | 获取 |
-|---|---|---|---|
-| `io.github.kyant0:backdrop:2.0.1` | Gradle 依赖（Maven Central） | Apache-2.0 | <https://github.com/Kyant0/AndroidLiquidGlass> |
-| `io.github.kyant0:shapes:1.2.1` | Gradle 依赖（Maven Central） | Apache-2.0 | <https://github.com/Kyant0/AndroidLiquidGlass> |
-| `LiquidBottomTabs.kt`、`LiquidBottomTab.kt`、`DampedDragAnimation.kt`<br>`InteractiveHighlight.kt`、`DragGestureInspector.kt`、`AwaitFrame.kt` | 源码形式引入 | Apache-2.0 | 上游 `app/src/*/kotlin/com/kyant/backdrop/catalog/**` |
-
-引入的源码位于 `app/src/main/kotlin/com/linuxlab/starter/ui/liquidglass/`，每个文件均**保留上游 Apache-2.0 版权头**，
-并在头部「修改说明」中列出改动：包名改为本项目包名、仅保留 Android 平台实现、
-配色改为由调用方传入以接入 Material 3 动态取色（Monet）。
-
-### 许可证兼容性
-
-- 本项目整体按 **GPL-3.0** 分发；Apache-2.0 经 FSF 认定为**与 GPLv3 兼容**（单向兼容：
-  Apache-2.0 代码可以并入 GPLv3 作品，反之不行）。因此合并后的作品以 GPL-3.0 提供，
-  Apache-2.0 部分保留其原有许可声明与免责条款。
-- 依据 Apache-2.0 第 4 条，本项目已做到：
-  1. 随附协议全文 —— 见 [`licenses/Apache-2.0.txt`](./licenses/Apache-2.0.txt)，
-     并在 APK 内置的 `assets/THIRD_PARTY_LICENSES.txt` 中收录；
-  2. 修改过的文件在头部显著标注了修改内容；
-  3. 保留全部版权、专利、商标与归属声明；
-  4. 在 [`NOTICE`](./NOTICE) 与本文件中列出上游归属信息。
-
-### 关于代码来源
-
-上游 release APK 经过 R8 混淆（类名与字符串均已重命名，无法通过反编译还原可读源码），
-因此本项目的移植**取自上游公开仓库的源码**，而非反编译产物 —— 这既保证了代码可读性，
-也保证了上述许可声明可完整追溯。
-
-## 6. 其他
-
-- Material Design 3 规范与动态取色（Monet）由 Android 系统运行时提供，不属于本项目分发内容。
+- Material Design 3 规范（含 Expressive）与动态取色（Monet）由 Android 系统运行时提供，不属于本项目分发内容。
 
 ---
 

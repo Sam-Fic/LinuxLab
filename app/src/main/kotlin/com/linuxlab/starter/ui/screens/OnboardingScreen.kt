@@ -18,14 +18,8 @@
 
 package com.linuxlab.starter.ui.screens
 
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -45,11 +39,12 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.MenuBook
-import androidx.compose.material.icons.outlined.AutoAwesome
-import androidx.compose.material.icons.outlined.RocketLaunch
-import androidx.compose.material.icons.outlined.Terminal
+import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.RocketLaunch
+import androidx.compose.material.icons.filled.Terminal
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -66,15 +61,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.linuxlab.starter.data.UserStore
+import com.linuxlab.starter.ui.components.MorphingBlob
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
+import com.linuxlab.starter.R
+import com.linuxlab.starter.ui.theme.Spacing
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
+import com.linuxlab.starter.ui.components.navBarBottomInset
 
 private data class OnboardingPage(
     val icon: ImageVector,
@@ -84,9 +84,17 @@ private data class OnboardingPage(
     val points: List<String>
 )
 
+/** 每页 hero 的有机形状：翻页时在形状之间形变（官网招牌动效） */
+private val HeroShapes = listOf(
+    MaterialShapes.Circle,
+    MaterialShapes.Sunny,
+    MaterialShapes.Cookie9Sided,
+    MaterialShapes.Clover8Leaf
+)
+
 private fun onboardingPages() = listOf(
     OnboardingPage(
-        icon = Icons.Outlined.Terminal,
+        icon = Icons.Filled.Terminal,
         title = "欢迎入门 Linux",
         subtitle = "Welcome to Linux",
         desc = "从这里开始，\n一步步认识命令行的世界。",
@@ -97,7 +105,7 @@ private fun onboardingPages() = listOf(
         )
     ),
     OnboardingPage(
-        icon = Icons.Outlined.RocketLaunch,
+        icon = Icons.Filled.RocketLaunch,
         title = "为什么要学 Linux",
         subtitle = "Why Linux",
         desc = "命令行不是过时的东西，\n而是直接与机器对话的最快方式。",
@@ -108,7 +116,7 @@ private fun onboardingPages() = listOf(
         )
     ),
     OnboardingPage(
-        icon = Icons.AutoMirrored.Outlined.MenuBook,
+        icon = Icons.AutoMirrored.Filled.MenuBook,
         title = "这个 App 能给你什么",
         subtitle = "What you get",
         desc = "从第一条命令开始，\n到能在真终端里动手操作。",
@@ -119,7 +127,7 @@ private fun onboardingPages() = listOf(
         )
     ),
     OnboardingPage(
-        icon = Icons.Outlined.AutoAwesome,
+        icon = Icons.Filled.AutoAwesome,
         title = "准备好了",
         subtitle = "You're all set",
         desc = "按这个顺序学，见效最快。\n全部内容离线可用，无需账号。",
@@ -145,26 +153,28 @@ fun OnboardingScreen(onFinish: () -> Unit) {
     val cs = MaterialTheme.colorScheme
     val isLast = pagerState.currentPage == pages.size - 1
 
-    // 透明 Scaffold：由外层 AppNav 铺壁纸/主题底色，引导页保持通透（合理例外）
-    Scaffold(containerColor = Color.Transparent) { padding ->
+    // 标准 Scaffold：M3 Expressive 主题的 surface 底色
+    Scaffold(
+        // 底部直通小白条：只保留状态栏避让（本页无顶栏）
+        contentWindowInsets = WindowInsets.statusBars,
+    ) { padding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                
         ) {
-            FloatingGlow()
-
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 24.dp)
+                    .padding(horizontal = Spacing.xxl)
             ) {
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(Spacing.lg))
 
                 // 跳过
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     TextButton(onClick = onFinish) {
-                        Text("跳过", style = MaterialTheme.typography.labelLarge)
+                        Text(stringResource(R.string.action_skip), style = MaterialTheme.typography.labelLarge)
                     }
                 }
 
@@ -176,15 +186,17 @@ fun OnboardingScreen(onFinish: () -> Unit) {
                 ) { page ->
                     PageContent(
                         page = pages[page],
+                        pageIndex = page,
                         active = pagerState.currentPage == page
                     )
                 }
 
-                // 指示点：当前页那条会拉长
+                // 指示点：当前页那条会拉长。
+                // 宽度动画走主题的 Expressive 动效方案（effects 弹簧，非空间属性）
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 20.dp),
+                        .padding(bottom = navBarBottomInset(Spacing.md)),
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -192,12 +204,12 @@ fun OnboardingScreen(onFinish: () -> Unit) {
                         val selected = index == pagerState.currentPage
                         val w by animateDpAsState(
                             targetValue = if (selected) 22.dp else 7.dp,
-                            animationSpec = tween(240),
+                            animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(),
                             label = "dot$index"
                         )
                         Box(
                             modifier = Modifier
-                                .padding(horizontal = 3.dp)
+                                .padding(horizontal = Spacing.xs)
                                 .size(width = w, height = 7.dp)
                                 .clip(CircleShape)
                                 .background(
@@ -221,7 +233,7 @@ fun OnboardingScreen(onFinish: () -> Unit) {
                         .fillMaxWidth()
                 ) {
                     Text(
-                        text = if (isLast) "开始使用" else "继续",
+                        text = if (isLast) stringResource(R.string.action_start) else stringResource(R.string.action_continue),
                         style = MaterialTheme.typography.titleMedium
                     )
                 }
@@ -230,7 +242,7 @@ fun OnboardingScreen(onFinish: () -> Unit) {
                     onClick = onFinish,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 24.dp)
+                        .padding(bottom = Spacing.xxl)
                 ) {
                     Text(
                         text = "离线可用 · 无账号 · 无追踪",
@@ -244,7 +256,7 @@ fun OnboardingScreen(onFinish: () -> Unit) {
 }
 
 @Composable
-private fun PageContent(page: OnboardingPage, active: Boolean) {
+private fun PageContent(page: OnboardingPage, pageIndex: Int, active: Boolean) {
     val cs = MaterialTheme.colorScheme
 
     // 进入该页时依次播放入场动画；离开后不复位，避免滑走时内容凭空消失
@@ -256,63 +268,41 @@ private fun PageContent(page: OnboardingPage, active: Boolean) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(vertical = 8.dp),
+            .padding(vertical = Spacing.sm),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(Spacing.xxl))
 
-        val pulse by rememberInfiniteTransition(label = "pulse").animateFloat(
-            initialValue = 0.97f,
-            targetValue = 1.03f,
-            animationSpec = infiniteRepeatable(
-                animation = tween(1800, easing = FastOutSlowInEasing),
-                repeatMode = RepeatMode.Reverse
-            ),
-            label = "pulseValue"
-        )
-
-        // 图标：渐变圆底 + 呼吸缩放（品牌装饰块，形状走主题 extraLarge）
-        Surface(
-            shape = MaterialTheme.shapes.extraLarge,
+        // 官网招牌动效：hero 图标装进有机形状 blob，翻页时形状之间形变
+        // （Circle → Sunny → Cookie9Sided → Clover8Leaf，graphics-shapes Morph）
+        MorphingBlob(
+            shapes = HeroShapes,
+            index = pageIndex,
             color = cs.primaryContainer,
             modifier = Modifier
-                .size(104.dp)
-                .graphicsLayer {
-                    scaleX = pulse
-                    scaleY = pulse
-                }
+                .size(120.dp)
                 .reveal(entered, delay = 0)
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.linearGradient(
-                            listOf(cs.primaryContainer, cs.tertiaryContainer)
-                        )
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = page.icon,
-                    contentDescription = null,
-                    tint = cs.onPrimaryContainer,
-                    modifier = Modifier.size(48.dp)
-                )
-            }
+            Icon(
+                imageVector = page.icon,
+                contentDescription = null,
+                tint = cs.onPrimaryContainer,
+                modifier = Modifier.size(48.dp)
+            )
         }
 
-        Spacer(Modifier.height(28.dp))
+        Spacer(Modifier.height(Spacing.xxl))
 
         Text(
             text = page.title,
-            style = MaterialTheme.typography.headlineMedium,
+            // Expressive 加重字阶（Medium 500），引导页大字更抓眼
+            style = MaterialTheme.typography.displaySmallEmphasized,
             color = cs.onSurface,
             textAlign = TextAlign.Center,
             modifier = Modifier.reveal(entered, delay = 70)
         )
 
-        Spacer(Modifier.height(6.dp))
+        Spacer(Modifier.height(Spacing.sm))
 
         Text(
             text = page.subtitle,
@@ -322,7 +312,7 @@ private fun PageContent(page: OnboardingPage, active: Boolean) {
             modifier = Modifier.reveal(entered, delay = 110)
         )
 
-        Spacer(Modifier.height(18.dp))
+        Spacer(Modifier.height(Spacing.lg))
 
         Text(
             text = page.desc,
@@ -332,16 +322,17 @@ private fun PageContent(page: OnboardingPage, active: Boolean) {
             modifier = Modifier.reveal(entered, delay = 150)
         )
 
-        Spacer(Modifier.height(28.dp))
+        Spacer(Modifier.height(Spacing.xxl))
 
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(Spacing.md)) {
             page.points.forEachIndexed { index, text ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(MaterialTheme.shapes.large)
+                        // 要点行：M3 Expressive largeIncreased 档（20dp）
+                        .clip(MaterialTheme.shapes.largeIncreased)
                         .background(cs.surfaceContainerHigh.copy(alpha = 0.75f))
-                        .padding(horizontal = 16.dp, vertical = 14.dp)
+                        .padding(horizontal = Spacing.lg, vertical = Spacing.lg)
                         .reveal(entered, delay = 200 + index * 70),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -351,7 +342,7 @@ private fun PageContent(page: OnboardingPage, active: Boolean) {
                             .clip(CircleShape)
                             .background(cs.primary)
                     )
-                    Spacer(Modifier.width(14.dp))
+                    Spacer(Modifier.width(Spacing.sm))
                     Text(
                         text = text,
                         style = MaterialTheme.typography.bodyMedium,
@@ -363,63 +354,20 @@ private fun PageContent(page: OnboardingPage, active: Boolean) {
     }
 }
 
-/** 入场：淡入 + 轻微上移，delay 决定第几个出场 */
+/** 入场：淡入 + 轻微上移（Expressive 动效方案的 default 空间弹簧），delay 决定第几个出场 */
 @Composable
 private fun Modifier.reveal(entered: Boolean, delay: Int): Modifier {
-    val progress by animateFloatAsState(
-        targetValue = if (entered) 1f else 0f,
-        animationSpec = tween(durationMillis = 320, delayMillis = delay, easing = FastOutSlowInEasing),
-        label = "reveal$delay"
-    )
-    return this.graphicsLayer {
-        alpha = progress
-        translationY = (1f - progress) * 26f
+    val motion = MaterialTheme.motionScheme
+    val progress = remember { Animatable(0f) }
+    LaunchedEffect(entered) {
+        if (entered) {
+            kotlinx.coroutines.delay(delay.toLong())
+            progress.animateTo(1f, animationSpec = motion.defaultSpatialSpec())
+        }
     }
-}
-
-/** 背景两团缓慢漂浮的渐变光斑，纯装饰 */
-@Composable
-private fun FloatingGlow() {
-    val cs = MaterialTheme.colorScheme
-    val transition = rememberInfiniteTransition(label = "glow")
-    val shift by transition.animateFloat(
-        initialValue = -26f,
-        targetValue = 26f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(6500, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "glowShift"
-    )
-
-    Box(modifier = Modifier.fillMaxSize()) {
-        Box(
-            modifier = Modifier
-                .offset(x = 0.dp, y = shift.dp)
-                .size(220.dp)
-                .align(Alignment.TopEnd)
-                .offset(x = 40.dp, y = 90.dp)
-                .background(
-                    Brush.radialGradient(
-                        colors = listOf(cs.primary.copy(alpha = 0.18f), Color.Transparent),
-                        center = Offset.Unspecified,
-                        radius = 420f
-                    )
-                )
-        )
-        Box(
-            modifier = Modifier
-                .offset(x = 0.dp, y = (-shift).dp)
-                .size(240.dp)
-                .align(Alignment.BottomStart)
-                .offset(x = (-50).dp, y = (-120).dp)
-                .background(
-                    Brush.radialGradient(
-                        colors = listOf(cs.tertiary.copy(alpha = 0.16f), Color.Transparent),
-                        center = Offset.Unspecified,
-                        radius = 460f
-                    )
-                )
-        )
+    val value = progress.value
+    return this.graphicsLayer {
+        alpha = value
+        translationY = (1f - value) * 26f
     }
 }

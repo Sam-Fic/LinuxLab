@@ -18,6 +18,7 @@
 
 package com.linuxlab.starter.terminal.ui
 
+import android.graphics.Typeface
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
@@ -30,89 +31,85 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.text.drawText
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextLayoutResult
-import androidx.compose.ui.text.TextMeasurer
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.rememberTextMeasurer
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.linuxlab.starter.terminal.emulator.Cell
 import com.linuxlab.starter.terminal.emulator.ColorResolver
 import com.linuxlab.starter.terminal.emulator.TerminalBuffer
 import com.linuxlab.starter.terminal.emulator.TextAttr
 import kotlinx.coroutines.delay
+import com.linuxlab.starter.ui.theme.Spacing
 
 /**
  * 终端渲染组件：把 TerminalBuffer 画成带颜色的等宽文本。
  *
- * 性能要点：
- * 1. 整个屏只用 **一个 Canvas** 绘制，而不是每行一个 Text 组件，
- *    这样键盘弹出/收起的动画期间（尺寸每帧都在变）不会反复重组几十个组件；
- * 2. 每一行的文本排版（TextLayoutResult）**按需测量并缓存**，
- *    内容没变就不重排，绘制时直接复用；
- * 3. 行列数变化先防抖再同步给 PTY，避免动画期间每帧都触发 TIOCSWINSZ。
+ * 性能要点（原生 Canvas 直绘，不走 Compose 文本栈）：
+ * 1. 整屏只用 **一个 Canvas**；缓冲区版本号（State）在**绘制阶段**读取，
+ *    新输出只触发重绘（draw invalidation），不触发重组；
+ * 2. 文本用 android.graphics.Paint 直绘：**同一样式的连续字符合并成 run**，
+ *    一段一次 drawText —— 旧实现逐字符建 SpanStyle 的 AnnotatedString，
+ *    一次全屏更新要测 30 行 × 80 个 span，是打字卡顿的主源；
+ * 3. Paint 按（前景色/粗/斜/下划线）组合缓存，跨帧复用；
+ *    背景矩形按 run 的实测宽度绘制，且与默认底色相同的 run 直接跳过；
+ * 4. 行列数变化先防抖再同步给 PTY，避免键盘动画期间每帧都触发 TIOCSWINSZ。
  */
 @Composable
 fun TerminalView(
     buffer: TerminalBuffer,
-    scrollOffset: Int,
-    onScroll: (Int) -> Unit,
     modifier: Modifier = Modifier,
     fontSize: TextUnit = 12.sp,
     backgroundColor: Color = Color(0xFF0C0C0C),
     foregroundColor: Color = Color(0xFFE6E6E6)
 ) {
-    // 只在内容变化时重建排版缓存（订阅缓冲区版本号）
-    val version = buffer.version
     val density = LocalDensity.current
-    val measurer = rememberTextMeasurer()
+    val textSizePx = with(density) { fontSize.toPx() }.coerceAtLeast(1f)
+    val lineHeightPx = with(density) { (fontSize * 1.25f).toPx() }.coerceAtLeast(1f)
+    // 文字区内边距：终端字符不再贴屏幕边（8/4 = sm/xs 档）。
+    // 背景仍由外层 Box 铺满出血，只有绘制内容整体内缩。
+    val padXPx = with(density) { Spacing.sm.toPx() }
+    val padYPx = with(density) { Spacing.xs.toPx() }
 
-    val style = remember(fontSize) {
-        TextStyle(
-            fontFamily = FontFamily.Monospace,
-            fontSize = fontSize,
-            lineHeight = fontSize * 1.25f,
-            color = foregroundColor
-        )
+    // 等宽字体字符宽（只用于估算列数与光标定位）
+    val charWidthPx = remember(textSizePx) { measureMonoCharWidth(textSizePx) }
+    // 基线在行内的偏移：把字面在 1.25 倍行距里垂直居中
+    val baselineOffset = remember(textSizePx, lineHeightPx) {
+        val fm = android.graphics.Paint().apply {
+            typeface = Typeface.MONOSPACE
+            textSize = textSizePx
+            fontMetrics
+        }.fontMetrics
+        (lineHeightPx - fm.descent + fm.ascent) / 2f - fm.ascent
     }
 
-    val charWidthPx = remember(style, density) {
-        (measurer.measure("M".repeat(40), style, maxLines = 1).size.width / 40f).coerceAtLeast(1f)
-    }
-    val lineHeightPx = remember(fontSize, density) {
-        with(density) { (fontSize * 1.25f).toPx() }.coerceAtLeast(1f)
-    }
+    // 按样式组合缓存的文字 Paint + 共享的背景 Paint，跨帧复用
+    val paintCache = remember(textSizePx) { TerminalPaintCache(textSizePx) }
+    val defaultFgInt = remember(foregroundColor) { foregroundColor.toArgb() }
+    val defaultBgInt = remember(backgroundColor) { backgroundColor.toArgb() }
 
     var columns by remember { mutableIntStateOf(buffer.columns) }
-
-    // 内容或列数变化时才丢掉旧缓存；尺寸变化（键盘动画）不会导致重排
-    val cache = remember(version, columns, style, measurer, foregroundColor, backgroundColor) {
-        LineLayoutCache(buffer, columns, style, measurer, foregroundColor, backgroundColor)
-    }
+    // 历史回看偏移：内部状态。拖拽只重组本组件（Canvas 重绘），
+    // 不再把整个父屏幕（输入行/快捷键区）卷进重组
+    var scrollOffset by remember { mutableIntStateOf(0) }
 
     BoxWithConstraints(
         modifier = modifier
             .background(backgroundColor)
             .pointerInput(lineHeightPx) {
                 detectVerticalDragGestures { _, dragAmount ->
-                    onScroll((dragAmount / lineHeightPx).toInt())
+                    val max = buffer.totalLines.coerceAtLeast(0)
+                    scrollOffset =
+                        (scrollOffset + (dragAmount / lineHeightPx).toInt()).coerceIn(0, max)
                 }
             }
     ) {
         val newRows = (constraints.maxHeight / lineHeightPx).toInt().coerceIn(2, 300)
-        val newCols = (constraints.maxWidth / charWidthPx).toInt().coerceIn(20, 400)
+        val newCols = ((constraints.maxWidth - 2 * padXPx) / charWidthPx).toInt().coerceIn(20, 400)
 
         // 防抖：动画结束后再真正调整缓冲区尺寸并同步给 PTY
         LaunchedEffect(newRows, newCols) {
@@ -122,95 +119,183 @@ fun TerminalView(
         }
 
         Canvas(modifier = Modifier.fillMaxSize()) {
-            val visibleRows = (size.height / lineHeightPx).toInt().coerceAtLeast(1)
-            val total = cache.lineCount
+            // 在绘制阶段读取缓冲区版本号：新输出 → 只重绘，不重组
+            @Suppress("UNUSED_VARIABLE")
+            val bufferVersion = buffer.version
+
+            val canvas = drawContext.canvas.nativeCanvas
+            canvas.save()
+            canvas.translate(padXPx, padYPx)
+            val visibleRows = ((size.height - 2 * padYPx) / lineHeightPx).toInt().coerceAtLeast(1)
+            val total = buffer.totalLines
             val start = (total - visibleRows - scrollOffset).coerceAtLeast(0)
-            for (i in 0 until visibleRows) {
-                val layout = cache.layout(start + i) ?: continue
-                drawText(layout, topLeft = Offset(0f, i * lineHeightPx))
+            val rowHeight = lineHeightPx
+            val buf = StringBuilder(columns + 8)
+
+            var top = 0f
+            for (row in 0 until visibleRows) {
+                val lineIndex = start + row
+                val cells = buffer.lineForDisplay(lineIndex)
+                val cursorColumn =
+                    if (lineIndex == buffer.cursorAbsoluteRow) buffer.cursorX else -1
+                drawRow(
+                    canvas = canvas,
+                    cells = cells,
+                    width = columns,
+                    cursorColumn = cursorColumn,
+                    paintCache = paintCache,
+                    defaultFgInt = defaultFgInt,
+                    defaultBgInt = defaultBgInt,
+                    top = top,
+                    baseline = top + baselineOffset,
+                    rowHeight = rowHeight,
+                    charWidth = charWidthPx,
+                    buf = buf
+                )
+                top += rowHeight
+            }
+            canvas.restore()
+        }
+    }
+}
+
+private fun measureMonoCharWidth(textSizePx: Float): Float {
+    val paint = android.graphics.Paint().apply {
+        typeface = Typeface.MONOSPACE
+        textSize = textSizePx
+    }
+    return paint.measureText("M").coerceAtLeast(1f)
+}
+
+/** 文字 Paint 缓存：key = 前景色 + 粗/斜/下划线 */
+private class TerminalPaintCache(private val textSizePx: Float) {
+    private val paints = HashMap<Long, android.graphics.Paint>(64)
+
+    fun get(colorArgb: Int, bold: Boolean, italic: Boolean, underline: Boolean): android.graphics.Paint {
+        val key = (colorArgb.toLong() and 0xFFFFFFFFL) or
+            (if (bold) 1L shl 33 else 0L) or
+            (if (italic) 1L shl 34 else 0L) or
+            (if (underline) 1L shl 35 else 0L)
+        return paints.getOrPut(key) {
+            android.graphics.Paint().apply {
+                typeface = Typeface.MONOSPACE
+                textSize = this@TerminalPaintCache.textSizePx
+                isAntiAlias = true
+                this.color = colorArgb
+                isFakeBoldText = bold
+                textSkewX = if (italic) -0.25f else 0f
+                isUnderlineText = underline
             }
         }
     }
 }
 
-/**
- * 行排版缓存：按需测量，测得一次后一直复用，直到内容变化被 remember 丢弃。
- * 回滚行数可能上千，所以绝不能一次性全部测量。
- */
-private class LineLayoutCache(
-    private val buffer: TerminalBuffer,
-    private val columns: Int,
-    private val style: TextStyle,
-    private val measurer: TextMeasurer,
-    private val defaultFg: Color,
-    private val defaultBg: Color
-) {
-    private val cached = HashMap<Int, TextLayoutResult>(96)
-
-    val lineCount: Int get() = buffer.totalLines
-
-    fun layout(index: Int): TextLayoutResult? {
-        if (index < 0 || index >= buffer.totalLines) return null
-        cached[index]?.let { return it }
-        val cells = buffer.lineForDisplay(index) ?: return null
-        val cursorColumn = if (index == buffer.cursorAbsoluteRow) buffer.cursorX else -1
-        val text = buildLine(cells, columns, cursorColumn, defaultFg, defaultBg)
-        val result = measurer.measure(text, style, maxLines = 1, softWrap = false)
-        if (cached.size > 2000) cached.clear()
-        cached[index] = result
-        return result
-    }
+/** 背景 Paint（fill），共享一把 */
+private val sharedBgPaint = android.graphics.Paint().apply {
+    style = android.graphics.Paint.Style.FILL
 }
 
-private fun buildLine(
+/**
+ * 画一行：把同一样式的连续格合并成 run，一段一次 drawText；
+ * 背景矩形按 run 实测宽度绘制，与默认底色相同的 run 跳过不画。
+ */
+private fun drawRow(
+    canvas: android.graphics.Canvas,
     cells: Array<Cell>?,
     width: Int,
     cursorColumn: Int,
-    defaultFg: Color,
-    defaultBg: Color
-): AnnotatedString = buildAnnotatedString {
-    var x = 0
-    while (x < width) {
-        val cell = cells?.getOrNull(x)
-        if (cell == null) {
-            append(" ")
-            x++
-            continue
-        }
-        val isContinuation = (cell.attrs and TextAttr.WIDE_CONT) != 0
-        if (isContinuation && cell.ch == '\u0000') {
-            x++
-            continue
-        }
-        val bold = (cell.attrs and TextAttr.BOLD) != 0
-        val italic = (cell.attrs and TextAttr.ITALIC) != 0
-        val underline = (cell.attrs and TextAttr.UNDERLINE) != 0
+    paintCache: TerminalPaintCache,
+    defaultFgInt: Int,
+    defaultBgInt: Int,
+    top: Float,
+    baseline: Float,
+    rowHeight: Float,
+    charWidth: Float,
+    buf: StringBuilder
+) {
+    var runStartCol = 0
+    var runFg = 0
+    var runBg = 0
+    var runBold = false
+    var runItalic = false
+    var runUnderline = false
+    var runHasContent = false
 
-        var fg = ColorResolver.resolve(cell.fg, true, bold, defaultFg, defaultBg)
-        var bg = ColorResolver.resolve(cell.bg, false, false, defaultFg, defaultBg)
-        if ((cell.attrs and TextAttr.INVERSE) != 0) {
-            val t = fg
-            fg = bg
-            bg = t
+    fun flush(endCol: Int) {
+        if (!runHasContent || buf.isEmpty()) return
+        val paint = paintCache.get(runFg, runBold, runItalic, runUnderline)
+        val text = buf.toString()
+        val xStart = runStartCol * charWidth
+        val runWidth = paint.measureText(text)
+        if (runBg != defaultBgInt) {
+            sharedBgPaint.color = runBg
+            canvas.drawRect(xStart, top, xStart + runWidth, top + rowHeight, sharedBgPaint)
         }
-        if (cursorColumn == x) {
-            val t = fg
-            fg = bg
-            bg = t
-        }
-        if ((cell.attrs and TextAttr.DIM) != 0) fg = ColorResolver.dim(fg)
-
-        pushStyle(
-            SpanStyle(
-                color = fg,
-                background = bg,
-                fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal,
-                fontStyle = if (italic) FontStyle.Italic else FontStyle.Normal,
-                textDecoration = if (underline) TextDecoration.Underline else null
-            )
-        )
-        append(cell.ch)
-        pop()
-        x++
+        canvas.drawText(text, xStart, baseline, paint)
+        buf.setLength(0)
+        runHasContent = false
     }
+
+    var col = 0
+    while (col < width) {
+        val cell = cells?.getOrNull(col)
+        if (cell != null && (cell.attrs and TextAttr.WIDE_CONT) != 0 && cell.ch == '\u0000') {
+            // 双宽字符的右半格：不占字符，跳过
+            col++
+            continue
+        }
+
+        var bold = false
+        var italic = false
+        var underline = false
+        val ch: Char
+        var fg: Int
+        var bg: Int
+
+        if (cell == null || cell.ch == '\u0000') {
+            ch = ' '
+            fg = defaultFgInt
+            bg = defaultBgInt
+        } else {
+            ch = cell.ch
+            bold = (cell.attrs and TextAttr.BOLD) != 0
+            italic = (cell.attrs and TextAttr.ITALIC) != 0
+            underline = (cell.attrs and TextAttr.UNDERLINE) != 0
+            var fgColor = ColorResolver.resolve(cell.fg, true, bold, defaultFg(defaultFgInt), defaultBg(defaultBgInt))
+            var bgColor = ColorResolver.resolve(cell.bg, false, false, defaultFg(defaultFgInt), defaultBg(defaultBgInt))
+            if ((cell.attrs and TextAttr.INVERSE) != 0) {
+                val t = fgColor; fgColor = bgColor; bgColor = t
+            }
+            if ((cell.attrs and TextAttr.DIM) != 0) fgColor = ColorResolver.dim(fgColor)
+            fg = fgColor.toArgb()
+            bg = bgColor.toArgb()
+            if (cursorColumn == col) {
+                val t = fg; fg = bg; bg = t
+            }
+        }
+
+        // 与当前 run 样式不同 → 先收尾，再开新 run
+        if (runHasContent && (fg != runFg || bg != runBg || bold != runBold ||
+                italic != runItalic || underline != runUnderline)
+        ) {
+            flush(col)
+            runStartCol = col
+        }
+        if (!runHasContent) {
+            runStartCol = col
+            runFg = fg
+            runBg = bg
+            runBold = bold
+            runItalic = italic
+            runUnderline = underline
+            runHasContent = true
+        }
+        buf.append(ch)
+        col++
+    }
+    flush(width)
 }
+
+// ColorResolver 接收 Compose Color；这里把缓存的 ARGB int 包装回 Color（值类型，无分配）
+private fun defaultFg(argb: Int) = Color(argb)
+private fun defaultBg(argb: Int) = Color(argb)

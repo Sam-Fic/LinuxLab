@@ -18,6 +18,11 @@
 
 package com.linuxlab.starter.ui.screens
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,19 +39,22 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.Warning
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.MediumFlexibleTopAppBar
+import androidx.compose.material3.TextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -56,11 +64,25 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.linuxlab.starter.ui.components.CodeBlock
 import com.linuxlab.starter.ui.components.SectionTitle
 import com.linuxlab.starter.ui.components.rememberCopyAction
+import com.linuxlab.starter.ui.components.FilledFilterChip
+import androidx.compose.material3.ButtonGroupDefaults
+import androidx.compose.material3.FilledTonalToggleButton
+import androidx.compose.material3.FilledTonalToggleButtonDefaults
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import com.linuxlab.starter.ui.components.connectedToggleShapes
+import androidx.compose.ui.res.stringResource
+import com.linuxlab.starter.R
+import com.linuxlab.starter.ui.theme.Spacing
+import androidx.compose.foundation.layout.WindowInsets
+import com.linuxlab.starter.ui.components.navBarBottomInset
 
 // 9 个权限位在 mask 里的下标：高 3 位属主，中间 3 位属组，低 3 位其他用户
 private const val BIT_UR = 8
@@ -123,7 +145,9 @@ private val Presets = listOf(
 @Composable
 fun ChmodScreen(onBack: () -> Unit) {
     val cs = MaterialTheme.colorScheme
-    val copy = rememberCopyAction()
+    // 复制反馈走 M3 官方 Snackbar（Toast 不参与 Material 主题体系）
+    val snackbarHostState = remember { SnackbarHostState() }
+    val copy = rememberCopyAction(snackbarHostState)
 
     // 默认 644：最常见的普通文件权限
     var mask by remember { mutableIntStateOf(0b110_100_100) }
@@ -144,60 +168,86 @@ fun ChmodScreen(onBack: () -> Unit) {
     val octalCmd = "chmod $octal $name"
     val symbolCmd = "chmod u=${letters(u)},g=${letters(g)},o=${letters(o)} $name"
 
+    // Expressive 弹性顶栏：随内容滚动收起
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+
     Scaffold(
-        containerColor = androidx.compose.ui.graphics.Color.Transparent,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            TopAppBar(
-                title = { Text("权限计算器") },
+            MediumFlexibleTopAppBar(
+                title = { Text(stringResource(R.string.title_chmod_calculator)) },
+                subtitle = { Text(stringResource(R.string.chmod_subtitle)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
-                }
+                },
+                scrollBehavior = scrollBehavior
             )
         }
     ) { padding ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding),
-            contentPadding = PaddingValues(bottom = 24.dp)
+                .padding(padding)
+                ,
+            contentPadding = PaddingValues(bottom = navBarBottomInset())
         ) {
-            // 结果
+            // 结果：官网式大数字 hero 带（主色容器 + display 级数字）
             item {
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 10.dp),
-                    shape = MaterialTheme.shapes.large,
+                        .padding(horizontal = Spacing.lg, vertical = Spacing.sm),
+                    // 全应用统一档：全宽 hero 色带与首页大卡同为 extraLargeIncreased(32dp)
+                    shape = MaterialTheme.shapes.extraLargeIncreased,
                     color = cs.primaryContainer
                 ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(18.dp),
+                            .padding(horizontal = Spacing.xl, vertical = Spacing.xxl),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text(
-                            text = octal,
-                            style = MaterialTheme.typography.displayMedium.copy(
-                                fontFamily = FontFamily.Monospace
-                            ),
-                            color = cs.onPrimaryContainer
-                        )
+                        // 数字切换：Expressive 动效方案的弹簧驱动淡入 + 轻微放大
+                        val motion = MaterialTheme.motionScheme
+                        AnimatedContent(
+                            targetState = octal,
+                            transitionSpec = {
+                                (fadeIn(animationSpec = motion.fastEffectsSpec()) +
+                                    scaleIn(
+                                        animationSpec = motion.defaultSpatialSpec(),
+                                        initialScale = 0.8f
+                                    )) togetherWith
+                                    fadeOut(animationSpec = motion.fastEffectsSpec())
+                            },
+                            label = "octal"
+                        ) { value ->
+                            Text(
+                                text = value,
+                                // Expressive 加重字阶：常规 displayLarge 为 Normal 400，
+                                // Emphasized 提到 Medium 500，等宽大数字更实、更醒目
+                                style = MaterialTheme.typography.displayLargeEmphasized.copy(
+                                    fontFamily = FontFamily.Monospace
+                                ),
+                                color = cs.onPrimaryContainer
+                            )
+                        }
                         Text(
                             text = symbolic,
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontFamily = FontFamily.Monospace
                             ),
-                            color = cs.onPrimaryContainer.copy(alpha = 0.8f),
-                            modifier = Modifier.padding(top = 4.dp)
+                            color = cs.onPrimaryContainer.copy(alpha = 0.85f),
+                            modifier = Modifier.padding(top = Spacing.xs)
                         )
                         Text(
                             text = "ls -l 里看到的就是：$lsPreview",
                             style = MaterialTheme.typography.bodySmall,
                             color = cs.onPrimaryContainer.copy(alpha = 0.75f),
-                            modifier = Modifier.padding(top = 8.dp)
+                            modifier = Modifier.padding(top = Spacing.sm)
                         )
                     }
                 }
@@ -206,7 +256,7 @@ fun ChmodScreen(onBack: () -> Unit) {
             // 九宫格勾选
             item { SectionTitle(text = "勾选权限") }
             item {
-                Column(Modifier.padding(horizontal = 16.dp)) {
+                Column(Modifier.padding(horizontal = Spacing.lg)) {
                     PermRow(
                         title = "属主 User（u）",
                         subtitle = "文件的拥有者",
@@ -215,7 +265,7 @@ fun ChmodScreen(onBack: () -> Unit) {
                         bits = intArrayOf(BIT_UR, BIT_UW, BIT_UX),
                         onToggle = { mask = toggleBit(mask, it) }
                     )
-                    Spacer(Modifier.height(10.dp))
+                    Spacer(Modifier.height(Spacing.md))
                     PermRow(
                         title = "属组 Group（g）",
                         subtitle = "与文件同组的用户",
@@ -224,7 +274,7 @@ fun ChmodScreen(onBack: () -> Unit) {
                         bits = intArrayOf(BIT_GR, BIT_GW, BIT_GX),
                         onToggle = { mask = toggleBit(mask, it) }
                     )
-                    Spacer(Modifier.height(10.dp))
+                    Spacer(Modifier.height(Spacing.md))
                     PermRow(
                         title = "其他用户 Others（o）",
                         subtitle = "既不是属主也不在同组的人",
@@ -239,41 +289,57 @@ fun ChmodScreen(onBack: () -> Unit) {
             // 生成的命令
             item { SectionTitle(text = "生成的命令") }
             item {
-                Column(Modifier.padding(horizontal = 16.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        FilterChip(
-                            selected = !isDir,
-                            onClick = { isDir = false },
-                            label = { Text("作用于文件", style = MaterialTheme.typography.labelMedium) }
+                Column(Modifier.padding(horizontal = Spacing.lg)) {
+                    // 「文件 / 目录」是互斥单选，用官方 connected button group：
+                    // 首/尾 connected shapes + FilledTonalToggleButton + 单选语义。
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(
+                            ButtonGroupDefaults.ConnectedSpaceBetween
                         )
-                        Spacer(Modifier.width(8.dp))
-                        FilterChip(
-                            selected = isDir,
-                            onClick = { isDir = true },
-                            label = { Text("作用于目录", style = MaterialTheme.typography.labelMedium) }
-                        )
+                    ) {
+                        FilledTonalToggleButton(
+                            checked = !isDir,
+                            onCheckedChange = { isDir = false },
+                            shapes = connectedToggleShapes(index = 0, count = 2),
+                            modifier = Modifier
+                                .weight(1f)
+                                .semantics { role = Role.RadioButton }
+                        ) {
+                            Text(stringResource(R.string.chmod_apply_to_file), style = MaterialTheme.typography.labelMedium)
+                        }
+                        FilledTonalToggleButton(
+                            checked = isDir,
+                            onCheckedChange = { isDir = true },
+                            shapes = connectedToggleShapes(index = 1, count = 2),
+                            modifier = Modifier
+                                .weight(1f)
+                                .semantics { role = Role.RadioButton }
+                        ) {
+                            Text(stringResource(R.string.chmod_apply_to_dir), style = MaterialTheme.typography.labelMedium)
+                        }
                     }
-                    OutlinedTextField(
+                    TextField(
                         value = fileName,
                         onValueChange = { fileName = it },
-                        label = { Text("文件名 / 目录名") },
+                        label = { Text(stringResource(R.string.label_file_name)) },
                         singleLine = true,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 10.dp)
+                            .padding(top = Spacing.sm)
                     )
                     Text(
                         text = "数字写法（最常用）",
                         style = MaterialTheme.typography.labelLarge,
                         color = cs.primary,
-                        modifier = Modifier.padding(top = 12.dp, bottom = 4.dp)
+                        modifier = Modifier.padding(top = Spacing.md, bottom = Spacing.xs)
                     )
                     CodeBlock(code = octalCmd, onCopy = copy)
                     Text(
                         text = "符号写法（只改指定的位，不影响其他位）",
                         style = MaterialTheme.typography.labelLarge,
                         color = cs.primary,
-                        modifier = Modifier.padding(top = 12.dp, bottom = 4.dp)
+                        modifier = Modifier.padding(top = Spacing.md, bottom = Spacing.xs)
                     )
                     CodeBlock(code = symbolCmd, onCopy = copy)
                     if (isDir) {
@@ -283,7 +349,7 @@ fun ChmodScreen(onBack: () -> Unit) {
                             }",
                             style = MaterialTheme.typography.bodySmall,
                             color = cs.onSurfaceVariant,
-                            modifier = Modifier.padding(top = 10.dp)
+                            modifier = Modifier.padding(top = Spacing.sm)
                         )
                     }
                 }
@@ -295,12 +361,12 @@ fun ChmodScreen(onBack: () -> Unit) {
                 FlowRow(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                        .padding(horizontal = Spacing.lg),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.sm)
                 ) {
                     Presets.forEach { preset ->
-                        FilterChip(
+                        FilledFilterChip(
                             selected = mask == preset.mask && special == preset.special,
                             onClick = {
                                 mask = preset.mask
@@ -326,11 +392,11 @@ fun ChmodScreen(onBack: () -> Unit) {
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 4.dp),
-                    shape = MaterialTheme.shapes.large,
+                        .padding(horizontal = Spacing.lg, vertical = Spacing.xs),
+                    shape = MaterialTheme.shapes.largeIncreased,
                     color = cs.surfaceContainerHigh
                 ) {
-                    Column(Modifier.padding(14.dp)) {
+                    Column(Modifier.padding(Spacing.lg)) {
                         SpecialBitRow(
                             label = "setuid · 4",
                             desc = "执行时以「文件属主」的身份运行。典型：/usr/bin/passwd（普通用户也能改自己的密码）",
@@ -359,11 +425,11 @@ fun ChmodScreen(onBack: () -> Unit) {
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 4.dp),
-                    shape = MaterialTheme.shapes.large,
+                        .padding(horizontal = Spacing.lg, vertical = Spacing.xs),
+                    shape = MaterialTheme.shapes.largeIncreased,
                     color = cs.surfaceContainerHigh
                 ) {
-                    Column(Modifier.padding(14.dp)) {
+                    Column(Modifier.padding(Spacing.lg)) {
                         MeaningHeader()
                         MeaningRow("r 读 4", "读取文件内容（cat、less）", "列出目录里有什么（ls）")
                         MeaningRow("w 写 2", "修改、覆盖文件内容", "在目录里新建 / 删除 / 重命名文件")
@@ -378,20 +444,21 @@ fun ChmodScreen(onBack: () -> Unit) {
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 4.dp),
-                    // 同心圆角：外层 20.dp（shapes.large）、内层代码块距卡边缘 12.dp，圆角差 20-8=12.dp
-                    shape = MaterialTheme.shapes.large,
+                        .padding(horizontal = Spacing.lg, vertical = Spacing.xs),
+                    // 同心圆角：外层 20.dp（shapes.largeIncreased，Expressive 档位）、
+                    // 内层代码块距卡边缘 16.dp，圆角差 20-16=4.dp
+                    shape = MaterialTheme.shapes.largeIncreased,
                     color = cs.errorContainer
                 ) {
-                    Column(Modifier.padding(12.dp)) {
+                    Column(Modifier.padding(Spacing.lg)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
-                                Icons.Outlined.Warning,
+                                Icons.Filled.Warning,
                                 contentDescription = null,
                                 tint = cs.onErrorContainer,
                                 modifier = Modifier.size(18.dp)
                             )
-                            Spacer(Modifier.width(8.dp))
+                            Spacer(Modifier.width(Spacing.sm))
                             Text(
                                 text = "别拿 chmod 开玩笑",
                                 style = MaterialTheme.typography.labelLarge,
@@ -404,7 +471,7 @@ fun ChmodScreen(onBack: () -> Unit) {
                             "目录没有 x 权限时进不去：只有 r 只能看到文件名，cd 会失败",
                             "想看某个文件当前的八进制权限：stat -c '%a %n' 文件名"
                         ).forEachIndexed { index, tip ->
-                            Row(Modifier.padding(top = 8.dp)) {
+                            Row(Modifier.padding(top = Spacing.sm)) {
                                 Text(
                                     text = "${index + 1}.",
                                     style = MaterialTheme.typography.bodySmall,
@@ -414,15 +481,15 @@ fun ChmodScreen(onBack: () -> Unit) {
                                     text = tip,
                                     style = MaterialTheme.typography.bodySmall,
                                     color = cs.onErrorContainer,
-                                    modifier = Modifier.padding(start = 8.dp)
+                                    modifier = Modifier.padding(start = Spacing.sm)
                                 )
                             }
                         }
                         CodeBlock(
                             code = "stat -c '%a %n' $name",
-                            modifier = Modifier.padding(top = 12.dp),
+                            modifier = Modifier.padding(top = Spacing.md),
                             onCopy = copy,
-                            shape = RoundedCornerShape(8.dp)
+                            shape = MaterialTheme.shapes.extraSmall
                         )
                     }
                 }
@@ -443,10 +510,11 @@ private fun PermRow(
     val cs = MaterialTheme.colorScheme
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
+        // 权限位行卡：M3 Expressive largeIncreased 档（20dp），卡内边距 16dp
+        shape = MaterialTheme.shapes.largeIncreased,
         color = cs.surfaceContainerHigh
     ) {
-        Column(Modifier.padding(14.dp)) {
+        Column(Modifier.padding(Spacing.lg)) {
             Text(text = title, style = MaterialTheme.typography.titleSmall, color = cs.onSurface)
             Text(
                 text = subtitle,
@@ -456,46 +524,61 @@ private fun PermRow(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 10.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    .padding(top = Spacing.sm)
             ) {
-                PermChip("读 r · 4", bits[0], mask, tint, onToggle, Modifier.weight(1f))
-                PermChip("写 w · 2", bits[1], mask, tint, onToggle, Modifier.weight(1f))
-                PermChip("执行 x · 1", bits[2], mask, tint, onToggle, Modifier.weight(1f))
+                // 官网式 connected button group：一组 r/w/x 是三个多选
+                // FilledTonalToggleButton，用首/中/尾 connected shapes 连成一组。
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(
+                        ButtonGroupDefaults.ConnectedSpaceBetween
+                    )
+                ) {
+                    val permColors = FilledTonalToggleButtonDefaults.colors(
+                        checkedContainerColor = tint,
+                        checkedContentColor = cs.surface
+                    )
+                    FilledTonalToggleButton(
+                        checked = hasBit(mask, bits[0]),
+                        onCheckedChange = { onToggle(bits[0]) },
+                        shapes = connectedToggleShapes(index = 0, count = 3),
+                        colors = permColors,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        PermSegmentLabel("读 r·4")
+                    }
+                    FilledTonalToggleButton(
+                        checked = hasBit(mask, bits[1]),
+                        onCheckedChange = { onToggle(bits[1]) },
+                        shapes = connectedToggleShapes(index = 1, count = 3),
+                        colors = permColors,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        PermSegmentLabel("写 w·2")
+                    }
+                    FilledTonalToggleButton(
+                        checked = hasBit(mask, bits[2]),
+                        onCheckedChange = { onToggle(bits[2]) },
+                        shapes = connectedToggleShapes(index = 2, count = 3),
+                        colors = permColors,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        PermSegmentLabel("执行 x·1")
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-private fun PermChip(
-    label: String,
-    bit: Int,
-    mask: Int,
-    tint: Color,
-    onToggle: (Int) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val cs = MaterialTheme.colorScheme
-    FilterChip(
-        selected = hasBit(mask, bit),
-        onClick = { onToggle(bit) },
-        label = {
-            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.labelMedium.copy(
-                        fontFamily = FontFamily.Monospace
-                    ),
-                    maxLines = 1
-                )
-            }
-        },
-        modifier = modifier,
-        colors = FilterChipDefaults.filterChipColors(
-            selectedContainerColor = tint,
-            selectedLabelColor = cs.surface
-        )
+private fun PermSegmentLabel(label: String) {
+    Text(
+        text = label,
+        style = MaterialTheme.typography.labelMedium.copy(
+            fontFamily = FontFamily.Monospace
+        ),
+        maxLines = 1
     )
 }
 
@@ -510,10 +593,10 @@ private fun SpecialBitRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 6.dp),
+            .padding(vertical = Spacing.xs),
         verticalAlignment = Alignment.Top
     ) {
-        FilterChip(
+        FilledFilterChip(
             selected = checked,
             onClick = onToggle,
             label = { Text(label, style = MaterialTheme.typography.labelMedium) }
@@ -523,7 +606,7 @@ private fun SpecialBitRow(
             style = MaterialTheme.typography.bodySmall,
             color = cs.onSurfaceVariant,
             modifier = Modifier
-                .padding(start = 10.dp)
+                .padding(start = Spacing.sm)
                 .weight(1f)
         )
     }
@@ -532,7 +615,7 @@ private fun SpecialBitRow(
 @Composable
 private fun MeaningHeader() {
     val cs = MaterialTheme.colorScheme
-    Row(Modifier.fillMaxWidth().padding(bottom = 6.dp)) {
+    Row(Modifier.fillMaxWidth().padding(bottom = Spacing.xs)) {
         Text(
             text = "权限",
             style = MaterialTheme.typography.labelLarge,
@@ -560,7 +643,7 @@ private fun MeaningRow(perm: String, forFile: String, forDir: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 5.dp),
+            .padding(vertical = Spacing.xs),
         verticalAlignment = Alignment.Top
     ) {
         Text(

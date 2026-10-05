@@ -45,20 +45,20 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.RestartAlt
-import androidx.compose.material.icons.outlined.Terminal
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.RestartAlt
+import androidx.compose.material.icons.filled.Terminal
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -77,7 +77,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -99,20 +98,27 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.linuxlab.starter.terminal.TerminalSession
 import com.linuxlab.starter.terminal.ui.TerminalView
+import com.linuxlab.starter.ui.components.FilledAssistChip
+import androidx.compose.material3.ButtonGroupDefaults
+import androidx.compose.material3.FilledTonalToggleButton
+import com.linuxlab.starter.ui.components.connectedToggleShapes
+import androidx.compose.ui.res.stringResource
+import com.linuxlab.starter.R
+import com.linuxlab.starter.ui.theme.Spacing
 
 // 真实终端渲染专用前景/背景色（终端模拟器不套用 M3 配色，属合理例外）
 private val TermBackground = Color(0xFF0B0F0D)
 private val TermForeground = Color(0xFFE8F1EC)
+// 固定深底上的警示色（取 M3 dark error 80 色调，深浅主题下都可在深底上阅读）
+private val TermDanger = Color(0xFFFFB4AB)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RealTerminalScreen(
-    bottomBarInset: Dp = 0.dp,
     onFallbackToSandbox: () -> Unit
 ) {
     val context = LocalContext.current
@@ -121,7 +127,6 @@ fun RealTerminalScreen(
     val focusRequester = remember { FocusRequester() }
 
     var fontSize by rememberSaveable { mutableIntStateOf(12) }
-    var scrollOffset by remember { mutableIntStateOf(0) }
     var input by remember { mutableStateOf(TextFieldValue("")) }
     val keyboard = LocalSoftwareKeyboardController.current
     val imeVisible = rememberImeVisible()
@@ -164,14 +169,14 @@ fun RealTerminalScreen(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
-                            Icons.Outlined.Terminal,
+                            Icons.Filled.Terminal,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(22.dp)
                         )
-                        Spacer(Modifier.width(8.dp))
+                        Spacer(Modifier.width(Spacing.sm))
                         Column {
-                            Text("真实终端 · Alpine Linux", style = MaterialTheme.typography.titleMedium)
+                            Text(stringResource(R.string.title_real_terminal), style = MaterialTheme.typography.titleMedium)
                             Text(
                                 when (session.state) {
                                     TerminalSession.State.INSTALLING -> "正在准备系统…"
@@ -195,10 +200,10 @@ fun RealTerminalScreen(
                         Text("${fontSize}sp", style = MaterialTheme.typography.labelLarge)
                     }
                     IconButton(onClick = { session.runDiagnostics() }) {
-                        Icon(Icons.Outlined.Info, contentDescription = "诊断")
+                        Icon(Icons.Filled.Info, contentDescription = stringResource(R.string.cd_diagnose))
                     }
                     IconButton(onClick = { session.restart(scope) }) {
-                        Icon(Icons.Outlined.RestartAlt, contentDescription = "重启会话")
+                        Icon(Icons.Filled.RestartAlt, contentDescription = stringResource(R.string.cd_restart_session))
                     }
                 }
             )
@@ -208,6 +213,7 @@ fun RealTerminalScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                
                 .background(TermBackground)
         ) {
             when (session.state) {
@@ -234,11 +240,6 @@ fun RealTerminalScreen(
                     ) {
                         TerminalView(
                             buffer = session.buffer,
-                            scrollOffset = scrollOffset,
-                            onScroll = { delta ->
-                                val max = (session.buffer.totalLines).coerceAtLeast(0)
-                                scrollOffset = (scrollOffset + delta).coerceIn(0, max)
-                            },
                             fontSize = fontSize.sp,
                             backgroundColor = TermBackground,
                             foregroundColor = TermForeground,
@@ -246,33 +247,34 @@ fun RealTerminalScreen(
                         )
                     }
 
-                    // 底部控制区：贴在键盘上方，输入时始终可见
+                    // 底部控制区：贴在键盘上方，输入时始终可见。
+                    // inset 链：外层 Scaffold 已消费底栏/手势条的避让量，
+                    // 这里只需并上 IME（键盘弹出时底栏会隐藏，手势条 insets 由这里接管）
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .windowInsetsPadding(
-                                // 键盘高度与导航栏高度取较大者，避免出现黑色空隙；
-                                // 玻璃底栏可见时再并上它的高度，避免输入框被底栏压住
                                 WindowInsets.ime
                                     .union(WindowInsets.navigationBars)
-                                    .union(
-                                        WindowInsets(
-                                            bottom = with(LocalDensity.current) { bottomBarInset.roundToPx() }
-                                        )
-                                    )
                                     .only(WindowInsetsSides.Bottom)
                             )
                     ) {
                     // 输入行
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp),
+                        // 仅上圆角：从官方令牌 shapes.large（16dp）派生，
+                        // 把下方两角置 0 —— Material3 内部的 CornerLargeTop 令牌不可用，
+                        // 用官方公开的 CornerBasedShape.copy 得到完全等价的结果。
+                        shape = MaterialTheme.shapes.large.copy(
+                            bottomStart = CornerSize(0.dp),
+                            bottomEnd = CornerSize(0.dp)
+                        ),
                         color = MaterialTheme.colorScheme.surfaceContainerHigh
                     ) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                                .padding(horizontal = Spacing.md, vertical = Spacing.sm),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             BasicTextField(
@@ -345,7 +347,7 @@ fun RealTerminalScreen(
                                 }
                             )
                             TextButton(onClick = { send("\r"); input = TextFieldValue("") }) {
-                                Text("回车")
+                                Text(stringResource(R.string.action_enter))
                             }
                         }
                     }
@@ -353,14 +355,14 @@ fun RealTerminalScreen(
                     if (!imeVisible) {
                     // 快捷命令
                     LazyRow(
-                        contentPadding = PaddingValues(horizontal = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        contentPadding = PaddingValues(horizontal = Spacing.sm),
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(MaterialTheme.colorScheme.surfaceContainerHigh)
                     ) {
                         items(quickCommands) { cmd ->
-                            AssistChip(
+                            FilledAssistChip(
                                 onClick = { send(cmd + "\r") },
                                 label = {
                                     Text(
@@ -384,11 +386,42 @@ fun RealTerminalScreen(
                             .fillMaxWidth()
                             .horizontalScroll(rememberScrollState())
                             .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                            .padding(horizontal = 6.dp, vertical = 6.dp),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            .padding(horizontal = Spacing.sm, vertical = Spacing.sm),
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        KeyToggle(text = "CTRL", active = ctrlOn) { ctrlOn = !ctrlOn }
-                        KeyToggle(text = "ALT", active = altOn) { altOn = !altOn }
+                        // CTRL / ALT：官方 connected button group 多选模式
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(
+                                ButtonGroupDefaults.ConnectedSpaceBetween
+                            ),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            FilledTonalToggleButton(
+                                checked = ctrlOn,
+                                onCheckedChange = { ctrlOn = it },
+                                shapes = connectedToggleShapes(index = 0, count = 2)
+                            ) {
+                                Text(
+                                    text = "CTRL",
+                                    style = MaterialTheme.typography.labelMedium.copy(
+                                        fontFamily = FontFamily.Monospace
+                                    )
+                                )
+                            }
+                            FilledTonalToggleButton(
+                                checked = altOn,
+                                onCheckedChange = { altOn = it },
+                                shapes = connectedToggleShapes(index = 1, count = 2)
+                            ) {
+                                Text(
+                                    text = "ALT",
+                                    style = MaterialTheme.typography.labelMedium.copy(
+                                        fontFamily = FontFamily.Monospace
+                                    )
+                                )
+                            }
+                        }
                         KeyButton("ESC") { send("\u001B") }
                         KeyButton("TAB") { send("\t") }
                         KeyButton("←") { send("\u001B[D") }
@@ -444,23 +477,7 @@ private fun KeyButton(label: String, onClick: () -> Unit) {
             text = label,
             style = MaterialTheme.typography.labelMedium.copy(fontFamily = FontFamily.Monospace),
             color = MaterialTheme.colorScheme.onSecondaryContainer,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
-        )
-    }
-}
-
-@Composable
-private fun KeyToggle(text: String, active: Boolean, onToggle: () -> Unit) {
-    Surface(
-        onClick = onToggle,
-        shape = MaterialTheme.shapes.small,
-        color = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelMedium.copy(fontFamily = FontFamily.Monospace),
-            color = if (active) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+            modifier = Modifier.padding(horizontal = Spacing.md, vertical = Spacing.sm)
         )
     }
 }
@@ -470,31 +487,30 @@ private fun InstallView(session: TerminalSession) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(32.dp),
+            .padding(Spacing.xxl),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Icon(
-            Icons.Outlined.Terminal,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(56.dp)
+        // M3 Expressive 波浪进度环：解压进度（Expressive 标志性组件）。
+        // 终端底恒为深色，用与明暗无关的 fixed 角色保证对比度；
+        // 有确定进度的环是唯一指示器，不再叠一个无信息的形变 blob
+        CircularWavyProgressIndicator(
+            progress = { session.progress.coerceIn(0f, 1f) },
+            color = MaterialTheme.colorScheme.primaryFixedDim,
+            trackColor = TermForeground.copy(alpha = 0.2f)
         )
         Text(
             text = session.message ?: "首次启动正在解压内置的 Alpine Linux…",
             style = MaterialTheme.typography.titleMedium,
             color = TermForeground,
-            modifier = Modifier.padding(top = 20.dp, bottom = 16.dp)
-        )
-        LinearProgressIndicator(
-            progress = { session.progress.coerceIn(0f, 1f) },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.padding(top = Spacing.xl, bottom = Spacing.lg)
         )
         Text(
             text = "约 3.8MB，只需一次，之后秒开（全程离线）",
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 12.dp)
+            // 固定深底上的次要文字：不能用主题 onSurfaceVariant（浅色主题下是深灰配深底）
+            color = TermForeground.copy(alpha = 0.7f),
+            modifier = Modifier.padding(top = Spacing.md)
         )
     }
 }
@@ -509,48 +525,49 @@ private fun FailedView(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
+            .padding(Spacing.xxl),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
             text = "真实终端启动失败",
             style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.error
+            // 固定深底上的警示色：主题 error 在浅色主题下是深红，深底上不可读
+            color = TermDanger
         )
         Text(
             text = message,
             style = MaterialTheme.typography.bodyMedium,
             color = TermForeground,
-            modifier = Modifier.padding(top = 12.dp)
+            modifier = Modifier.padding(top = Spacing.md)
         )
         Text(
             text = "常见原因：设备不是 arm64、系统禁止 ptrace，或设备禁止执行 App 数据目录中的二进制。",
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 8.dp)
+            color = TermForeground.copy(alpha = 0.7f),
+            modifier = Modifier.padding(top = Spacing.sm)
         )
         if (log.isNotEmpty()) {
             Surface(
-                // 终端日志面板：主题 medium 语义化（终端专用容器）
-                shape = MaterialTheme.shapes.medium,
+                // 终端日志面板：全应用统一档——所有容器/行都用 largeIncreased(20dp)
+                shape = MaterialTheme.shapes.largeIncreased,
                 color = TermBackground,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 16.dp)
+                    .padding(top = Spacing.lg)
             ) {
                 Text(
                     text = log.joinToString("\n") { it.ifBlank { " " } },
                     style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
                     color = TermForeground,
-                    modifier = Modifier.padding(12.dp)
+                    modifier = Modifier.padding(Spacing.md)
                 )
             }
         }
-        Row(modifier = Modifier.padding(top = 20.dp)) {
-            TextButton(onClick = onRetry) { Text("重试") }
-            Spacer(Modifier.width(12.dp))
-            TextButton(onClick = onFallback) { Text("改用内置沙盒终端") }
+        Row(modifier = Modifier.padding(top = Spacing.xl)) {
+            TextButton(onClick = onRetry) { Text(stringResource(R.string.action_retry)) }
+            Spacer(Modifier.width(Spacing.md))
+            TextButton(onClick = onFallback) { Text(stringResource(R.string.action_use_sandbox_terminal)) }
         }
     }
 }

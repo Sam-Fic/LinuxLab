@@ -82,7 +82,7 @@ fun DesktopDiagram(
     // 桌面底色：在各桌面统一的浅底上，混一点该桌面环境的主色，远看就能分辨
     val desk = lerp(cs.surfaceContainerHighest, t.panel, 0.18f)
     val marks = marksOf(spec)
-    val shapeResolved = shape ?: MaterialTheme.shapes.medium
+    val shapeResolved = shape ?: MaterialTheme.shapes.largeIncreased
 
     Column(
         modifier
@@ -776,36 +776,40 @@ fun DesktopLayerDiagram(
     modifier: Modifier = Modifier
 ) {
     val cs = MaterialTheme.colorScheme
-    val tints: List<Color> = listOf(
-        cs.surfaceContainerHighest,
-        cs.surfaceContainerHigh,
-        cs.surfaceContainer,
-        cs.secondaryContainer,
-        cs.primaryContainer,
-        cs.tertiaryContainer
+    // 每层 = 容器色 + 与之配对的 on 容器前景。
+    // 不能统一用 onSurface：第 4~6 层是 *Container 底色，
+    // 深色模式（尤其莫奈取色）下 onSurface 会在浅色容器上变成浅字浅底。
+    val tints: List<LayerTint> = listOf(
+        LayerTint(cs.surfaceContainerHighest, cs.onSurface, cs.onSurfaceVariant),
+        LayerTint(cs.surfaceContainerHigh, cs.onSurface, cs.onSurfaceVariant),
+        LayerTint(cs.surfaceContainer, cs.onSurface, cs.onSurfaceVariant),
+        LayerTint(cs.secondaryContainer, cs.onSecondaryContainer, cs.onSecondaryContainer),
+        LayerTint(cs.primaryContainer, cs.onPrimaryContainer, cs.onPrimaryContainer),
+        LayerTint(cs.tertiaryContainer, cs.onTertiaryContainer, cs.onTertiaryContainer)
     )
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         layers.forEachIndexed { index, (title, desc) ->
-            val bg = tints.getOrNull(index) ?: cs.surfaceContainer
+            val tint = tints.getOrNull(index)
+                ?: LayerTint(cs.surfaceContainer, cs.onSurface, cs.onSurfaceVariant)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(bg)
-                    .padding(horizontal = 10.dp, vertical = 8.dp),
+                    .clip(MaterialTheme.shapes.small)
+                    .background(tint.bg)
+                    .padding(horizontal = 8.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(Modifier.weight(1f)) {
                     Text(
                         text = "${index + 1}. $title",
                         style = MaterialTheme.typography.labelLarge,
-                        color = cs.onSurface,
+                        color = tint.title,
                         maxLines = 1
                     )
                     Text(
                         text = desc,
                         style = MaterialTheme.typography.bodySmall,
-                        color = cs.onSurfaceVariant,
+                        color = tint.desc.copy(alpha = 0.85f),
                         maxLines = 2
                     )
                 }
@@ -813,3 +817,6 @@ fun DesktopLayerDiagram(
         }
     }
 }
+
+/** 分层图一层的配色：容器底色 + 标题/描述各自配对的 on 前景 */
+private class LayerTint(val bg: Color, val title: Color, val desc: Color)

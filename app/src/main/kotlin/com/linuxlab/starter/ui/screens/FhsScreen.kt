@@ -20,7 +20,6 @@ package com.linuxlab.starter.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.expandVertically
@@ -47,24 +46,27 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
-import androidx.compose.material.icons.outlined.ExpandMore
-import androidx.compose.material.icons.outlined.Folder
-import androidx.compose.material.icons.outlined.Memory
-import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.Storage
-import androidx.compose.material.icons.outlined.Terminal
-import androidx.compose.material.icons.outlined.Tune
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.Memory
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Storage
+import androidx.compose.material.icons.filled.Terminal
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.MediumFlexibleTopAppBar
+import androidx.compose.material3.TextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -78,6 +80,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -86,17 +89,22 @@ import com.linuxlab.starter.model.FhsKind
 import com.linuxlab.starter.model.FhsNode
 import com.linuxlab.starter.ui.components.CodeBlock
 import com.linuxlab.starter.ui.components.rememberCopyAction
+import androidx.compose.ui.res.stringResource
+import com.linuxlab.starter.R
+import com.linuxlab.starter.ui.theme.Spacing
+import androidx.compose.foundation.layout.WindowInsets
+import com.linuxlab.starter.ui.components.navBarBottomInset
 
 // ---------------------------------------------------------------- 分类的图标 / 配色 / 名字
 
 @Composable
 private fun kindIcon(kind: FhsKind): ImageVector = when (kind) {
-    FhsKind.SYSTEM -> Icons.Outlined.Terminal
-    FhsKind.CONFIG -> Icons.Outlined.Tune
-    FhsKind.DATA -> Icons.Outlined.Storage
-    FhsKind.USER -> Icons.Outlined.Person
-    FhsKind.DEVICE -> Icons.Outlined.Memory
-    FhsKind.MISC -> Icons.Outlined.Folder
+    FhsKind.SYSTEM -> Icons.Filled.Terminal
+    FhsKind.CONFIG -> Icons.Filled.Tune
+    FhsKind.DATA -> Icons.Filled.Storage
+    FhsKind.USER -> Icons.Filled.Person
+    FhsKind.DEVICE -> Icons.Filled.Memory
+    FhsKind.MISC -> Icons.Filled.Folder
 }
 
 @Composable
@@ -194,7 +202,9 @@ private fun buildTopRows(
 @Composable
 fun FhsScreen(onBack: () -> Unit) {
     val cs = MaterialTheme.colorScheme
-    val copy = rememberCopyAction()
+    // 复制反馈走 M3 官方 Snackbar（Toast 不参与 Material 主题体系）
+    val snackbarHostState = remember { SnackbarHostState() }
+    val copy = rememberCopyAction(snackbarHostState)
 
     var query by remember { mutableStateOf("") }
     // 展开子目录的节点：默认全部收起，一进来是一张完整的一级目录清单
@@ -206,30 +216,40 @@ fun FhsScreen(onBack: () -> Unit) {
         buildTopRows(Repository.fhsTree, query, expanded.toSet())
     }
 
-    // 进页面时整棵树淡入 + 轻微上浮（只播一次，滚动时不再触发，免得逐行闪烁）
+    // 进页面时整棵树淡入 + 轻微上浮（只播一次，滚动时不再触发，免得逐行闪烁）。
+    // 规格取自 MaterialTheme.motionScheme，不再手写 Spring.StiffnessXxx：
+    // 透明度是「效果」类动效，位移是「空间」类动效。
     var entered by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { entered = true }
+    val motion = MaterialTheme.motionScheme
     val listAlpha by animateFloatAsState(
         targetValue = if (entered) 1f else 0f,
-        animationSpec = spring(stiffness = Spring.StiffnessLow),
+        animationSpec = motion.defaultEffectsSpec(),
         label = "listAlpha"
     )
     val listShift by animateFloatAsState(
         targetValue = if (entered) 0f else 24f,
-        animationSpec = spring(stiffness = Spring.StiffnessLow),
+        animationSpec = motion.defaultSpatialSpec(),
         label = "listShift"
     )
 
+    // Expressive 弹性顶栏：随内容滚动收起
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+
     Scaffold(
-        containerColor = androidx.compose.ui.graphics.Color.Transparent,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            TopAppBar(
-                title = { Text("FHS 目录结构图解") },
+            MediumFlexibleTopAppBar(
+                title = { Text(stringResource(R.string.title_fhs_diagram)) },
+                subtitle = { Text(stringResource(R.string.subtitle_fhs_diagram, Repository.fhsCount)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
-                }
+                },
+                scrollBehavior = scrollBehavior
             )
         }
     ) { padding ->
@@ -237,14 +257,15 @@ fun FhsScreen(onBack: () -> Unit) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                
                 .graphicsLayer {
                     alpha = listAlpha
                     translationY = listShift
                 },
-            contentPadding = PaddingValues(bottom = 24.dp)
+            contentPadding = PaddingValues(bottom = navBarBottomInset())
         ) {
             item {
-                Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                Column(Modifier.padding(horizontal = Spacing.lg, vertical = Spacing.sm)) {
                     Text(
                         text = "Linux 没有盘符：硬盘、U 盘都要「挂载」到这棵唯一的目录树上。" +
                             "点目录名看它是干什么的，点箭头展开子目录。",
@@ -254,21 +275,21 @@ fun FhsScreen(onBack: () -> Unit) {
                     FlowRow(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 10.dp),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                            .padding(top = Spacing.md),
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+                        verticalArrangement = Arrangement.spacedBy(Spacing.sm)
                     ) {
                         LegendKinds.forEach { kind -> LegendChip(kind = kind) }
                     }
-                    OutlinedTextField(
+                    TextField(
                         value = query,
                         onValueChange = { query = it },
-                        label = { Text("搜索目录或关键词") },
-                        placeholder = { Text("如 log、passwd、挂载、/var") },
+                        label = { Text(stringResource(R.string.search_fhs_placeholder)) },
+                        placeholder = { Text(stringResource(R.string.search_fhs_example)) },
                         singleLine = true,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 10.dp)
+                            .padding(top = Spacing.md)
                     )
                 }
             }
@@ -283,7 +304,7 @@ fun FhsScreen(onBack: () -> Unit) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(32.dp),
+                            .padding(Spacing.xxl),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -344,12 +365,12 @@ fun FhsScreen(onBack: () -> Unit) {
             }
 
             item {
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(Spacing.sm))
                 Text(
                     text = "共 ${Repository.fhsCount} 个目录 · 依据 FHS 3.0 与主流发行版的实际情况整理",
                     style = MaterialTheme.typography.labelSmall,
                     color = cs.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
+                    modifier = Modifier.padding(horizontal = Spacing.lg, vertical = Spacing.sm)
                 )
             }
         }
@@ -365,7 +386,7 @@ private fun LegendChip(kind: FhsKind) {
         color = cs.surfaceContainerHighest
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp),
+            modifier = Modifier.padding(start = Spacing.sm, end = Spacing.sm, top = Spacing.xs, bottom = Spacing.xs),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
@@ -378,7 +399,7 @@ private fun LegendChip(kind: FhsKind) {
                 text = kindLabel(kind),
                 style = MaterialTheme.typography.labelSmall,
                 color = cs.onSurfaceVariant,
-                modifier = Modifier.padding(start = 5.dp)
+                modifier = Modifier.padding(start = Spacing.xs)
             )
         }
     }
@@ -396,20 +417,30 @@ private fun TreeRow(
     val cs = MaterialTheme.colorScheme
     val hasChildren = node.children.isNotEmpty()
 
-    // 箭头随展开状态旋转、底色与图标色随选中状态渐变，而不是硬切
+    // 箭头随展开状态旋转、底色与图标色随选中状态渐变，而不是硬切。
+    // 旋转属空间类动效，用 motionScheme 的快速空间规格（比手写 stiffness 更跟手）
     val arrowRotation by animateFloatAsState(
         targetValue = if (childrenExpanded) 90f else 0f,
-        animationSpec = spring(stiffness = Spring.StiffnessMedium),
+        animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
         label = "arrowRotation"
     )
     val detailRotation by animateFloatAsState(
         targetValue = if (detailShown) 180f else 0f,
-        animationSpec = spring(stiffness = Spring.StiffnessMedium),
+        animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
         label = "detailRotation"
     )
     val rowColor by animateColorAsState(
         targetValue = if (detailShown) cs.secondaryContainer else Color.Transparent,
         label = "rowColor"
+    )
+    // 选中态底色是 secondaryContainer，文字跟着切到 onSecondaryContainer（深浅模式配对都正确）
+    val rowTitleColor by animateColorAsState(
+        targetValue = if (detailShown) cs.onSecondaryContainer else cs.onSurface,
+        label = "rowTitleColor"
+    )
+    val rowDescColor by animateColorAsState(
+        targetValue = if (detailShown) cs.onSecondaryContainer else cs.onSurfaceVariant,
+        label = "rowDescColor"
     )
     val rowIconColor by animateColorAsState(
         targetValue = kindColor(node.kind),
@@ -420,15 +451,16 @@ private fun TreeRow(
         modifier = Modifier
             .fillMaxWidth()
             .padding(start = (8 + depth * 16).dp, end = 12.dp, top = 1.dp, bottom = 1.dp),
-        // 树形结构行：M3 无树组件，Surface+clickable 属合理例外，形状走主题 medium
-        shape = MaterialTheme.shapes.medium,
+        // 树形结构行：M3 无树组件，Surface+clickable 属合理例外；
+        // 全应用统一档——所有容器/行都用 largeIncreased(20dp)
+        shape = MaterialTheme.shapes.largeIncreased,
         color = rowColor
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable(onClick = onRowClick)
-                .padding(horizontal = 8.dp, vertical = 9.dp),
+                .padding(horizontal = Spacing.sm, vertical = Spacing.sm),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // 展开子目录
@@ -440,8 +472,8 @@ private fun TreeRow(
             ) {
                 if (hasChildren) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowRight,
-                        contentDescription = if (childrenExpanded) "折叠" else "展开",
+                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = if (childrenExpanded) stringResource(R.string.action_collapse) else stringResource(R.string.action_expand),
                         tint = cs.onSurfaceVariant,
                         modifier = Modifier
                             .size(18.dp)
@@ -455,29 +487,29 @@ private fun TreeRow(
                 tint = rowIconColor,
                 modifier = Modifier.size(20.dp)
             )
-            Spacer(Modifier.width(10.dp))
+            Spacer(Modifier.width(Spacing.sm))
             Column(Modifier.weight(1f)) {
                 Text(
                     text = node.path,
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontFamily = FontFamily.Monospace
                     ),
-                    color = cs.onSurface,
+                    color = rowTitleColor,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = node.zh,
                     style = MaterialTheme.typography.bodySmall,
-                    color = cs.onSurfaceVariant,
+                    color = rowDescColor.copy(alpha = if (detailShown) 0.85f else 1f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
             }
             Icon(
-                imageVector = Icons.Outlined.ExpandMore,
+                imageVector = Icons.Filled.ExpandMore,
                 contentDescription = null,
-                tint = cs.onSurfaceVariant.copy(alpha = if (detailShown) 0.9f else 0.4f),
+                tint = rowDescColor.copy(alpha = if (detailShown) 0.9f else 0.4f),
                 modifier = Modifier
                     .size(18.dp)
                     .graphicsLayer { rotationZ = detailRotation }
@@ -533,11 +565,12 @@ private fun DetailPanel(
     ) {
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            // 同心圆角：外层 20.dp（shapes.large）、内层各块距卡边缘 12.dp，圆角差 20-8=12.dp
-            shape = MaterialTheme.shapes.large,
+            // 说明面板：M3 Expressive largeIncreased 档（20dp），
+            // 内层各块距面板边缘 12.dp，圆角差 20-12=8.dp
+            shape = MaterialTheme.shapes.largeIncreased,
             color = cs.surfaceContainerHigh
         ) {
-            Column(Modifier.padding(12.dp)) {
+            Column(Modifier.padding(Spacing.md)) {
                 // 标题行：图标 + 路径 + 分类
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
@@ -546,7 +579,7 @@ private fun DetailPanel(
                         tint = kindColor(node.kind),
                         modifier = Modifier.size(18.dp)
                     )
-                    Spacer(Modifier.width(8.dp))
+                    Spacer(Modifier.width(Spacing.sm))
                     Text(
                         text = node.path,
                         style = MaterialTheme.typography.titleMedium.copy(
@@ -556,14 +589,15 @@ private fun DetailPanel(
                         modifier = Modifier.weight(1f)
                     )
                     Surface(
-                        shape = RoundedCornerShape(8.dp),
+                        // 分类徽章：走主题 small 档（Expressive 8dp）
+                        shape = MaterialTheme.shapes.small,
                         color = cs.surfaceContainerHighest
                     ) {
                         Text(
                             text = kindLabel(node.kind),
                             style = MaterialTheme.typography.labelSmall,
                             color = cs.onSurfaceVariant,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                            modifier = Modifier.padding(horizontal = Spacing.sm, vertical = Spacing.xs)
                         )
                     }
                 }
@@ -572,39 +606,39 @@ private fun DetailPanel(
                     text = node.zh,
                     style = MaterialTheme.typography.bodyMedium,
                     color = cs.onSurface,
-                    modifier = Modifier.padding(top = 10.dp)
+                    modifier = Modifier.padding(top = Spacing.md)
                 )
                 if (node.detail.isNotBlank()) {
                     Text(
                         text = node.detail,
                         style = MaterialTheme.typography.bodySmall,
                         color = cs.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 6.dp)
+                        modifier = Modifier.padding(top = Spacing.xs)
                     )
                 }
 
                 if (node.files.isNotEmpty()) {
                     Text(
-                        text = "里面通常有什么",
+                        text = stringResource(R.string.fhs_inside_contents),
                         style = MaterialTheme.typography.labelLarge,
                         color = cs.primary,
-                        modifier = Modifier.padding(top = 12.dp)
+                        modifier = Modifier.padding(top = Spacing.md)
                     )
                     node.files.forEach { file ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(top = 6.dp),
+                                .padding(top = Spacing.xs),
                             verticalAlignment = Alignment.Top
                         ) {
                             Surface(
                                 shape = CircleShape,
                                 color = kindColor(node.kind),
                                 modifier = Modifier
-                                    .padding(top = 6.dp)
+                                    .padding(top = Spacing.xs)
                                     .size(5.dp)
                             ) {}
-                            Spacer(Modifier.width(8.dp))
+                            Spacer(Modifier.width(Spacing.sm))
                             Text(
                                 text = file,
                                 style = MaterialTheme.typography.bodySmall,
@@ -617,17 +651,18 @@ private fun DetailPanel(
 
                 if (node.commands.isNotEmpty()) {
                     Text(
-                        text = "常用命令",
+                        text = stringResource(R.string.fhs_common_commands),
                         style = MaterialTheme.typography.labelLarge,
                         color = cs.primary,
-                        modifier = Modifier.padding(top = 12.dp, bottom = 4.dp)
+                        modifier = Modifier.padding(top = Spacing.md, bottom = Spacing.xs)
                     )
                     node.commands.forEach { cmd ->
                         CodeBlock(
                             code = cmd,
-                            modifier = Modifier.padding(bottom = 8.dp),
+                            modifier = Modifier.padding(bottom = Spacing.sm),
                             onCopy = onCopy,
-                            shape = RoundedCornerShape(8.dp),
+                            // 同心圆角：外层面板 20.dp 与代码块间距 12.dp，圆角差 20-12=8.dp
+                            shape = MaterialTheme.shapes.small,
                         )
                     }
                 }
@@ -636,11 +671,12 @@ private fun DetailPanel(
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 6.dp),
-                        shape = RoundedCornerShape(8.dp),
+                            .padding(top = Spacing.xs),
+                        // 同心圆角：外层面板 20.dp 与提示块间距 12.dp，圆角差 20-12=8.dp
+                        shape = MaterialTheme.shapes.small,
                         color = cs.surfaceContainerHighest
                     ) {
-                        Column(Modifier.padding(12.dp)) {
+                        Column(Modifier.padding(Spacing.md)) {
                             node.tips.forEachIndexed { index, tip ->
                                 Row(Modifier.padding(vertical = 2.dp)) {
                                     Text(
@@ -652,7 +688,7 @@ private fun DetailPanel(
                                         text = tip,
                                         style = MaterialTheme.typography.bodySmall,
                                         color = cs.onSurfaceVariant,
-                                        modifier = Modifier.padding(start = 8.dp)
+                                        modifier = Modifier.padding(start = Spacing.sm)
                                     )
                                 }
                             }

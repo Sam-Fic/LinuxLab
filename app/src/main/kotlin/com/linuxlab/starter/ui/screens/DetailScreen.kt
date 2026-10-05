@@ -21,6 +21,7 @@ package com.linuxlab.starter.ui.screens
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -34,28 +35,31 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.ContentCopy
-import androidx.compose.material.icons.outlined.Lightbulb
-import androidx.compose.material.icons.outlined.Star
-import androidx.compose.material.icons.outlined.StarOutline
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Lightbulb
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MediumFlexibleTopAppBar
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.linuxlab.starter.data.Repository
@@ -65,6 +69,12 @@ import com.linuxlab.starter.model.Level
 import com.linuxlab.starter.ui.components.CodeBlock
 import com.linuxlab.starter.ui.components.SectionTitle
 import com.linuxlab.starter.ui.components.rememberCopyAction
+import com.linuxlab.starter.ui.components.FilledAssistChip
+import androidx.compose.ui.res.stringResource
+import com.linuxlab.starter.R
+import com.linuxlab.starter.ui.theme.Spacing
+import androidx.compose.foundation.layout.WindowInsets
+import com.linuxlab.starter.ui.components.navBarBottomInset
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,43 +84,52 @@ fun DetailScreen(
     onCommand: (Int) -> Unit
 ) {
     val command = Repository.byIndex(index)
-    val copy = rememberCopyAction()
+    // 复制反馈走 M3 官方 Snackbar（Toast 不参与 Material 主题体系）
+    val snackbarHostState = remember { SnackbarHostState() }
+    val copy = rememberCopyAction(snackbarHostState)
     val favorites by UserStore.favorites.collectAsState()
 
+    // Expressive 弹性顶栏：展开时大字显示命令名（等宽），滚动收起
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+
     Scaffold(
-        containerColor = androidx.compose.ui.graphics.Color.Transparent,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            TopAppBar(
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "返回")
-                    }
-                },
+            MediumFlexibleTopAppBar(
                 title = {
                     Text(
-                        text = command?.name ?: "命令详情",
+                        text = command?.name ?: stringResource(R.string.title_command_detail),
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontFamily = FontFamily.Monospace
                         )
                     )
+                },
+                subtitle = { command?.let { Text(it.categoryZh) } },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
+                    }
                 },
                 actions = {
                     if (command != null) {
                         val fav = favorites.contains(command.index)
                         IconButton(onClick = { UserStore.toggleFavorite(command.index) }) {
                             Icon(
-                                imageVector = if (fav) Icons.Outlined.Star else Icons.Outlined.StarOutline,
+                                imageVector = if (fav) Icons.Filled.Star else Icons.Filled.StarBorder,
                                 contentDescription = if (fav) "取消收藏" else "收藏",
-                                tint = if (fav) MaterialTheme.colorScheme.primary else LocalContentColor.current
+                                tint = if (fav) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                    }
-                    if (command != null && command.syntax.isNotBlank()) {
-                        IconButton(onClick = { copy(command.syntax) }) {
-                            Icon(Icons.Outlined.ContentCopy, contentDescription = "复制语法")
+                        if (command.syntax.isNotBlank()) {
+                            IconButton(onClick = { copy(command.syntax) }) {
+                                Icon(Icons.Filled.ContentCopy, contentDescription = stringResource(R.string.cd_copy_syntax))
+                            }
                         }
                     }
-                }
+                },
+                scrollBehavior = scrollBehavior
             )
         }
     ) { padding ->
@@ -121,7 +140,7 @@ fun DetailScreen(
                     .padding(padding),
                 contentAlignment = Alignment.Center
             ) {
-                Text("没有找到该命令", style = MaterialTheme.typography.bodyLarge)
+                Text(stringResource(R.string.empty_command_not_found), style = MaterialTheme.typography.bodyLarge)
             }
             return@Scaffold
         }
@@ -130,22 +149,30 @@ fun DetailScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                
         ) {
-            item { HeaderBlock(command) }
-
+            // 一句话说明
             item {
                 Text(
                     text = command.zh,
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp)
+                    modifier = Modifier.padding(horizontal = Spacing.lg, vertical = Spacing.sm)
                 )
                 Text(
                     text = command.en,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 2.dp)
+                    modifier = Modifier.padding(horizontal = Spacing.lg, vertical = 2.dp)
                 )
+                if (command.level == Level.BASIC) {
+                    Text(
+                        text = stringResource(R.string.label_must_learn),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(horizontal = Spacing.lg, vertical = Spacing.xs)
+                    )
+                }
             }
 
             if (command.detailZh.isNotBlank()) {
@@ -153,28 +180,28 @@ fun DetailScreen(
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
-                        // 说明内容容器：形状走主题 token
-                        shape = MaterialTheme.shapes.large,
+                            .padding(horizontal = Spacing.lg, vertical = Spacing.md),
+                        // 说明内容容器：M3 Expressive largeIncreased 档（20dp）
+                        shape = MaterialTheme.shapes.largeIncreased,
                         color = MaterialTheme.colorScheme.surfaceContainerHigh
                     ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
+                        Column(modifier = Modifier.padding(Spacing.lg)) {
                             Text(
-                                text = "详细说明 / Details",
+                                text = stringResource(R.string.label_detailed_notes),
                                 style = MaterialTheme.typography.labelLarge,
                                 color = MaterialTheme.colorScheme.primary
                             )
                             Text(
                                 text = command.detailZh,
                                 style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier.padding(top = 8.dp)
+                                modifier = Modifier.padding(top = Spacing.sm)
                             )
                             if (command.detailEn.isNotBlank()) {
                                 Text(
                                     text = command.detailEn,
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.padding(top = 6.dp)
+                                    modifier = Modifier.padding(top = Spacing.xs)
                                 )
                             }
                         }
@@ -187,7 +214,7 @@ fun DetailScreen(
                     SectionTitle("语法 / Syntax")
                     CodeBlock(
                         code = command.syntax,
-                        modifier = Modifier.padding(horizontal = 16.dp),
+                        modifier = Modifier.padding(horizontal = Spacing.lg),
                         onCopy = copy
                     )
                 }
@@ -199,7 +226,7 @@ fun DetailScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 8.dp)
+                            .padding(horizontal = Spacing.lg, vertical = Spacing.sm)
                     ) {
                         Surface(
                             // 参数标签徽章：走主题 small 档位
@@ -212,10 +239,10 @@ fun DetailScreen(
                                     fontFamily = FontFamily.Monospace
                                 ),
                                 color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                modifier = Modifier.padding(horizontal = Spacing.sm, vertical = Spacing.xs)
                             )
                         }
-                        Column(modifier = Modifier.padding(start = 12.dp)) {
+                        Column(modifier = Modifier.padding(start = Spacing.md)) {
                             Text(
                                 text = param.zh,
                                 style = MaterialTheme.typography.bodyMedium
@@ -236,8 +263,9 @@ fun DetailScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 6.dp)
+                            .padding(horizontal = Spacing.lg, vertical = Spacing.sm)
                     ) {
+                        // 序号徽章 22.dp + 间隔 8.dp → 下方说明/代码块对齐缩进 = 30.dp
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Surface(
                                 shape = CircleShape,
@@ -252,7 +280,7 @@ fun DetailScreen(
                                     )
                                 }
                             }
-                            Spacer(Modifier.width(8.dp))
+                            Spacer(Modifier.width(Spacing.sm))
                             Text(
                                 text = example.zh,
                                 style = MaterialTheme.typography.bodyMedium
@@ -268,7 +296,7 @@ fun DetailScreen(
                         }
                         CodeBlock(
                             code = example.code,
-                            modifier = Modifier.padding(start = 30.dp, top = 6.dp),
+                            modifier = Modifier.padding(start = 30.dp, top = Spacing.xs),
                             onCopy = copy
                         )
                     }
@@ -281,14 +309,14 @@ fun DetailScreen(
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 5.dp),
-                        // 提示内容容器：形状走主题 token
-                        shape = MaterialTheme.shapes.large,
+                            .padding(horizontal = Spacing.lg, vertical = Spacing.xs),
+                        // 提示内容容器：M3 Expressive largeIncreased 档（20dp）
+                        shape = MaterialTheme.shapes.largeIncreased,
                         color = MaterialTheme.colorScheme.tertiaryContainer
                     ) {
-                        Row(modifier = Modifier.padding(14.dp)) {
+                        Row(modifier = Modifier.padding(Spacing.lg)) {
                             Icon(
-                                Icons.Outlined.Lightbulb,
+                                Icons.Filled.Lightbulb,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.onTertiaryContainer,
                                 modifier = Modifier.size(20.dp)
@@ -297,7 +325,7 @@ fun DetailScreen(
                                 text = tip,
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onTertiaryContainer,
-                                modifier = Modifier.padding(start = 10.dp)
+                                modifier = Modifier.padding(start = Spacing.sm)
                             )
                         }
                     }
@@ -309,14 +337,15 @@ fun DetailScreen(
                 item {
                     val chips = command.related.mapNotNull { name -> Repository.byName(name) }
                     if (chips.isNotEmpty()) {
-                        Row(
+                        FlowRow(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                .padding(horizontal = Spacing.lg),
+                            horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+                            verticalArrangement = Arrangement.spacedBy(Spacing.xs)
                         ) {
                             chips.forEach { related ->
-                                AssistChip(
+                                FilledAssistChip(
                                     onClick = { onCommand(related.index) },
                                     label = {
                                         Text(
@@ -326,7 +355,7 @@ fun DetailScreen(
                                             )
                                         )
                                     },
-                                    shape = CircleShape,
+                                    // 形状走主题默认（M3 Expressive small 档，chips 的标准档位）
                                     colors = AssistChipDefaults.assistChipColors(
                                         containerColor = MaterialTheme.colorScheme.secondaryContainer,
                                         labelColor = MaterialTheme.colorScheme.onSecondaryContainer
@@ -338,61 +367,7 @@ fun DetailScreen(
                 }
             }
 
-            item { Spacer(modifier = Modifier.height(32.dp)) }
+            item { Spacer(Modifier.height(navBarBottomInset())) }
         }
     }
-}
-
-@Composable
-private fun HeaderBlock(command: Command) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        // 头部大卡：形状走主题 extraLarge 档位
-        shape = MaterialTheme.shapes.extraLarge,
-        color = MaterialTheme.colorScheme.primaryContainer
-    ) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Text(
-                text = command.name,
-                style = MaterialTheme.typography.displaySmall.copy(
-                    fontFamily = FontFamily.Monospace
-                ),
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-            Row(
-                modifier = Modifier.padding(top = 10.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Surface(
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.12f)
-                ) {
-                    Text(
-                        text = command.categoryZh,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp)
-                    )
-                }
-                Spacer(Modifier.width(8.dp))
-                Surface(
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.12f)
-                ) {
-                    Text(
-                        text = if (command.level == Level.BASIC) "入门必学" else "进阶",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp)
-                    )
-                }
-            }
-        }
-    }
-    HorizontalDivider(
-        modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
-        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
-    )
 }

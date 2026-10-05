@@ -1,3 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Linux 入门</string>
+
+    <!-- 底栏页签 -->
+    <string name="tab_quick_reference">速查</string>
+    <string name="tab_troubleshoot">排错</string>
+    <string name="tab_resources">资源</string>
+    <string name="tab_terminal">实战终端</string>
+
+    <!-- 通用操作 -->
+    <string name="action_back">返回</string>
+    <string name="action_clear">清空</string>
+    <string name="action_close">关闭</string>
+    <string name="action_retry">重试</string>
+    <string name="action_expand">展开</string>
+    <string name="action_collapse">收起</string>
+    <string name="action_skip">跳过</string>
+    <string name="action_continue">继续</string>
+    <string name="action_start">开始使用</string>
+    <string name="action_use_sandbox_terminal">改用内置沙盒终端</string>
+
+    <!-- 图标无障碍描述 -->
+    <string name="cd_copy">复制</string>
+    <string name="cd_copy_syntax">复制语法</string>
+    <string name="cd_run_command">执行</string>
+    <string name="cd_reset_sandbox">重置沙盒</string>
+    <string name="cd_diagnose">诊断</string>
+    <string name="cd_restart_session">重启会话</string>
+    <string name="cd_appearance_settings">外观设置</string>
+    <!-- 页面标题 -->
+    <string name="title_about">外观与关于</string>
+    <string name="title_command_detail">命令详情</string>
+    <string name="title_favorites">我的收藏</string>
+    <string name="title_chmod_calculator">权限计算器</string>
+    <string name="title_category_fallback">分类</string>
+
+    <!-- 分区标题 -->
+    <string name="section_daily_command">今日推荐命令</string>
+    <string name="section_desktop_tutorial">桌面环境教程</string>
+    <string name="section_terminal_tutorial">终端命令教程</string>
+    <string name="section_favorites">我的收藏</string>
+    <string name="section_chmod">权限计算器</string>
+    <string name="section_fhs">FHS 目录结构</string>
+
+    <!-- 动作 / 开关 -->
+    <string name="action_dynamic_color">从壁纸取色</string>
+    <string name="action_replay_onboarding">重新观看首次引导 / Replay onboarding</string>
+
+    <!-- 状态 / 空态 -->
+    <string name="empty_command_not_found">没有找到该命令</string>
+    <string name="empty_category_not_found">分类不存在</string>
+    <string name="empty_favorites_none">还没有收藏的命令</string>
+    <string name="label_must_learn">入门必学</string>
+
+    <!-- 详情说明 / 分节 -->
+    <string name="label_detailed_notes">详细说明 / Details</string>
+    <string name="label_mono_font_hint">命令名使用等宽字体显示，方便在终端里对照输入。</string>
+    <string name="chmod_subtitle">勾选 rwx → 实时算出 chmod 命令</string>
+    <string name="chmod_apply_to_file">作用于文件</string>
+    <string name="chmod_apply_to_dir">作用于目录</string>
+    <string name="fhs_inside_contents">里面通常有什么</string>
+    <string name="fhs_common_commands">常用命令</string>
+    <!-- 顶栏标题 / 副标题 -->
+    <string name="title_desktop_env_tutorial">桌面环境教程</string>
+    <string name="title_desktop_env">桌面环境</string>
+    <string name="title_fhs_diagram">FHS 目录结构图解</string>
+    <string name="title_terminal_tutorial">终端命令教程</string>
+    <string name="title_real_terminal">真实终端 · Alpine Linux</string>
+    <string name="title_sandbox_terminal">模拟终端 · 实战沙盒</string>
+    <string name="title_open_source_licenses">开源许可 / Licenses</string>
+
+    <string name="subtitle_desktop_env_tutorial">9 个桌面环境 · 图解布局与安装</string>
+    <string name="subtitle_terminal_tutorial">命令 + 选项 + 参数 · 学习顺序</string>
+    <string name="subtitle_fhs_diagram">Linux 唯一的目录树 · %1$d 个目录</string>
+    <string name="about_source_code">本应用源码：GNU GPL v3.0</string>
+
+    <!-- 搜索框 -->
+    <string name="search_home_placeholder">搜索命令、参数或示例…</string>
+    <string name="search_fhs_placeholder">搜索目录或关键词</string>
+    <string name="search_fhs_example">如 log、passwd、挂载、/var</string>
+    <string name="search_command_placeholder">命令名 / 用途 / 示例，如 权限、log、kill</string>
+    <string name="search_faq_placeholder">搜问题或报错，如 Permission denied、端口、OOM</string>
+    <string name="search_link_placeholder">搜站点，如 wiki、docker、python</string>
+
+    <!-- 筛选 -->
+    <string name="filter_all">全部</string>
+    <string name="filter_all_count">全部 %1$d</string>
+    <string name="label_file_name">文件名 / 目录名</string>
+    <string name="action_enter">回车</string>
+    <string name="empty_desktop_env_not_found">未找到该桌面环境</string>
+    <!-- 剪贴板 / 反馈 -->
+    <string name="clip_label">Linux 入门</string>
+    <string name="snack_copied">已复制：%1$s</string>
 </resources>

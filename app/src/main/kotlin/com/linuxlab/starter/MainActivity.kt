@@ -25,7 +25,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import com.linuxlab.starter.data.UserStore
-import com.linuxlab.starter.data.WallpaperStore
 import com.linuxlab.starter.ui.AppNav
 import com.linuxlab.starter.ui.ThemePrefs
 import com.linuxlab.starter.ui.theme.LinuxStarterTheme
@@ -33,15 +32,16 @@ import com.linuxlab.starter.ui.theme.LinuxStarterTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // 全面板绘制：内容延伸到状态栏与手势导航条（小白条）之下，
+        // 具体的避让由各处 Scaffold / TopAppBar / NavigationBar 的 insets 处理
         enableEdgeToEdge()
         setContent {
             val context = LocalContext.current
             val prefs = remember { ThemePrefs(context.applicationContext) }
             // 收藏与首页排序也走 SharedPreferences，先在这里初始化好单例
             remember { UserStore.init(context.applicationContext) }
-            remember { WallpaperStore.init(context.applicationContext) }
 
-            // Material 3 + 莫奈动态取色：Android 12+ 自动从壁纸取色
+            // Material 3 Expressive + 莫奈动态取色：Android 12+ 自动从壁纸取色
             LinuxStarterTheme(
                 themeMode = prefs.themeMode,
                 useDynamicColor = prefs.useDynamicColor

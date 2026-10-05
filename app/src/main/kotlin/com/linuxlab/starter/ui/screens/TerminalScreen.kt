@@ -29,6 +29,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.union
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -40,13 +47,13 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.CheckCircle
-import androidx.compose.material.icons.outlined.ExpandLess
-import androidx.compose.material.icons.outlined.ExpandMore
-import androidx.compose.material.icons.outlined.PlayArrow
-import androidx.compose.material.icons.outlined.RadioButtonUnchecked
-import androidx.compose.material.icons.outlined.RestartAlt
-import androidx.compose.material.icons.outlined.Terminal
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.RadioButtonUnchecked
+import androidx.compose.material.icons.filled.RestartAlt
+import androidx.compose.material.icons.filled.Terminal
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -87,6 +94,10 @@ import com.linuxlab.starter.terminal.TermKind
 import com.linuxlab.starter.terminal.TermLine
 import com.linuxlab.starter.terminal.TermSignal
 import com.linuxlab.starter.terminal.TerminalEngine
+import com.linuxlab.starter.ui.components.FilledAssistChip
+import androidx.compose.ui.res.stringResource
+import com.linuxlab.starter.R
+import com.linuxlab.starter.ui.theme.Spacing
 
 private val MonoStyle @Composable get() = TextStyle(
     fontFamily = FontFamily.Monospace,
@@ -126,7 +137,18 @@ fun TerminalScreen() {
     }
 
     // ---------- 主体布局 ----------
-    Column(modifier = Modifier.fillMaxSize()) {
+    // 键盘与手势条取并集（各边取较大者）：键盘弹出时手势条被键盘覆盖，
+    // 不能 ime + navigationBars 两层相加（会多垫出一个手势条高度）
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .windowInsetsPadding(
+                WindowInsets.ime
+                    .union(WindowInsets.navigationBars)
+                    .only(WindowInsetsSides.Bottom)
+            )
+            
+    ) {
         TopBar(
             onReset = {
                 engine.fs.reset()
@@ -152,7 +174,7 @@ fun TerminalScreen() {
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .padding(horizontal = 12.dp),
+                .padding(horizontal = Spacing.lg),
             // 终端输出区：主题 shapes.large 语义化（终端专用容器）
             shape = MaterialTheme.shapes.large,
             color = MaterialTheme.colorScheme.surfaceContainerHighest
@@ -161,7 +183,7 @@ fun TerminalScreen() {
                 state = listState,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 12.dp, vertical = 10.dp)
+                    .padding(horizontal = Spacing.lg, vertical = Spacing.md)
             ) {
                 itemsIndexed(lines) { _, line ->
                     Text(
@@ -185,13 +207,13 @@ fun TerminalScreen() {
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 8.dp),
-            // 终端输入行：主题 shapes.medium 语义化（终端专用容器）
-            shape = MaterialTheme.shapes.medium,
+                .padding(horizontal = Spacing.lg, vertical = Spacing.sm),
+            // 终端输入行：全应用统一档——所有容器/行都用 largeIncreased(20dp)
+            shape = MaterialTheme.shapes.largeIncreased,
             color = MaterialTheme.colorScheme.surfaceContainerHigh
         ) {
             Row(
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                modifier = Modifier.padding(horizontal = Spacing.lg, vertical = Spacing.sm),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
@@ -199,7 +221,7 @@ fun TerminalScreen() {
                     style = MonoStyle.copy(color = MaterialTheme.colorScheme.tertiary),
                     maxLines = 1
                 )
-                Spacer(Modifier.width(6.dp))
+                Spacer(Modifier.width(Spacing.sm))
                 BasicTextField(
                     value = input,
                     onValueChange = { input = it },
@@ -237,8 +259,8 @@ fun TerminalScreen() {
                 )
                 IconButton(onClick = { submit() }) {
                     Icon(
-                        Icons.Outlined.PlayArrow,
-                        contentDescription = "执行",
+                        Icons.Filled.PlayArrow,
+                        contentDescription = stringResource(R.string.cd_run_command),
                         tint = MaterialTheme.colorScheme.primary
                     )
                 }
@@ -247,11 +269,11 @@ fun TerminalScreen() {
 
         // 快捷命令
         LazyRow(
-            contentPadding = PaddingValues(horizontal = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            contentPadding = PaddingValues(horizontal = Spacing.lg),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
         ) {
             items(quickCommands) { command ->
-                AssistChip(
+                FilledAssistChip(
                     onClick = { runCommand(command) },
                     label = {
                         Text(
@@ -268,7 +290,7 @@ fun TerminalScreen() {
                 )
             }
         }
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(Spacing.sm))
     }
 }
 
@@ -294,14 +316,14 @@ private fun TopBar(onReset: () -> Unit) {
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    Icons.Outlined.Terminal,
+                    Icons.Filled.Terminal,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(22.dp)
                 )
-                Spacer(Modifier.width(8.dp))
+                Spacer(Modifier.width(Spacing.sm))
                 Column {
-                    Text("模拟终端 · 实战沙盒", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.title_sandbox_terminal), style = MaterialTheme.typography.titleMedium)
                     Text(
                         "沙盒内的操作不会影响手机",
                         style = MaterialTheme.typography.bodySmall,
@@ -312,7 +334,7 @@ private fun TopBar(onReset: () -> Unit) {
         },
         actions = {
             IconButton(onClick = onReset) {
-                Icon(Icons.Outlined.RestartAlt, contentDescription = "重置沙盒")
+                Icon(Icons.Filled.RestartAlt, contentDescription = stringResource(R.string.cd_reset_sandbox))
             }
         }
     )
@@ -331,11 +353,12 @@ private fun TasksCard(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 6.dp),
-        shape = MaterialTheme.shapes.large,
+            .padding(horizontal = Spacing.lg, vertical = Spacing.sm),
+        // 实战任务卡：M3 Expressive largeIncreased 档（20dp），卡内边距 16dp
+        shape = MaterialTheme.shapes.largeIncreased,
         color = MaterialTheme.colorScheme.primaryContainer
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
+        Column(modifier = Modifier.padding(Spacing.lg)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -353,9 +376,9 @@ private fun TasksCard(
                     )
                 }
                 TextButton(onClick = onToggle) {
-                    Text(if (expanded) "收起" else "展开")
+                    Text(if (expanded) stringResource(R.string.action_collapse) else stringResource(R.string.action_expand))
                     Icon(
-                        if (expanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
+                        if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
                         contentDescription = null,
                         modifier = Modifier.size(18.dp)
                     )
@@ -363,30 +386,30 @@ private fun TasksCard(
             }
 
             if (expanded) {
-                Spacer(Modifier.height(6.dp))
+                Spacer(Modifier.height(Spacing.sm))
                 PracticeTasks.all.forEach { task ->
                     val done = task.done(engine)
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 3.dp),
-                        // 同心圆角：外卡 20.dp（shapes.large）与任务块间距 12.dp，圆角差 20-12=8.dp
-                        shape = RoundedCornerShape(8.dp),
+                            .padding(vertical = Spacing.xs),
+                        // 同心圆角：外卡 20.dp（shapes.largeIncreased）与任务块间距 16.dp，圆角差 20-16=4.dp
+                        shape = MaterialTheme.shapes.extraSmall,
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.06f),
                         onClick = { onFill(task.example) }
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                            modifier = Modifier.padding(horizontal = Spacing.sm, vertical = Spacing.sm),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
-                                if (done) Icons.Outlined.CheckCircle else Icons.Outlined.RadioButtonUnchecked,
+                                if (done) Icons.Filled.CheckCircle else Icons.Filled.RadioButtonUnchecked,
                                 contentDescription = null,
                                 tint = if (done) MaterialTheme.colorScheme.tertiary
                                 else MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.5f),
                                 modifier = Modifier.size(18.dp)
                             )
-                            Column(modifier = Modifier.padding(start = 10.dp).weight(1f)) {
+                            Column(modifier = Modifier.padding(start = Spacing.sm).weight(1f)) {
                                 Text(
                                     text = task.title,
                                     style = MaterialTheme.typography.bodyMedium,
@@ -407,7 +430,7 @@ private fun TasksCard(
                     text = "点任意任务可一键执行示例命令",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
-                    modifier = Modifier.padding(top = 6.dp)
+                    modifier = Modifier.padding(top = Spacing.xs)
                 )
             }
         }

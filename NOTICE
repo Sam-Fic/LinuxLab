@@ -21,17 +21,6 @@ Copyright (C) 2026 拾星*
     Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors
     https://github.com/JetBrains/kotlin
 
-  * Backdrop —— Compose Multiplatform 液态玻璃效果库
-    Copyright 2025 Kyant
-    https://github.com/Kyant0/AndroidLiquidGlass
-    （Maven: io.github.kyant0:backdrop:2.0.1、io.github.kyant0:shapes:1.2.1）
-
-  * 上述仓库中的示例组件（LiquidBottomTabs / LiquidBottomTab /
-    DampedDragAnimation / InteractiveHighlight / DragGestureInspector /
-    AwaitFrame），已按源码形式引入本项目的
-    app/src/main/kotlin/com/linuxlab/starter/ui/liquidglass/ 目录，
-    并在每个文件头部保留原版权声明、标注了所做的修改。
-
 ──────────────────────────────────────────────────────────────
 以下组件按 GNU General Public License v2.0 分发，完整清单与源码获取方式见
 THIRD_PARTY_LICENSES.md 与随 APK 内置的 assets/THIRD_PARTY_LICENSES.txt。

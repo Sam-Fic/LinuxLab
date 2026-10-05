@@ -20,6 +20,7 @@ package com.linuxlab.starter.ui.screens
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -36,12 +37,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.HelpOutline
-import androidx.compose.material.icons.outlined.Close
-import androidx.compose.material.icons.outlined.ExpandLess
-import androidx.compose.material.icons.outlined.ExpandMore
-import androidx.compose.material.icons.outlined.Search
-import androidx.compose.material.icons.outlined.WarningAmber
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.WarningAmber
+import androidx.compose.material3.AppBarWithSearch
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -49,37 +51,47 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberSearchBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import com.linuxlab.starter.data.Repository
 import com.linuxlab.starter.model.Danger
 import com.linuxlab.starter.model.Faq
 import com.linuxlab.starter.ui.components.CodeBlock
+import com.linuxlab.starter.ui.components.EmptyState
 import com.linuxlab.starter.ui.components.rememberCopyAction
+import com.linuxlab.starter.ui.components.FilledFilterChip
+import androidx.compose.ui.res.stringResource
+import com.linuxlab.starter.R
+import com.linuxlab.starter.ui.theme.Spacing
+import androidx.compose.foundation.layout.WindowInsets
+import com.linuxlab.starter.ui.components.navBarBottomInset
 
 /**
- * 常见问题排查：现象 → 原因 → 处理步骤（命令可一键复制）。
+ * 常见问题排查：M3 原生「应用栏 + 搜索框」；
+ * 下方为分类筛选 + 现象 → 原因 → 处理步骤（命令可一键复制）。
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FaqScreen(initialQuery: String = "") {
-    var query by rememberSaveable { mutableStateOf(initialQuery) }
+    val textFieldState = rememberTextFieldState(initialText = initialQuery)
+    val searchBarState = rememberSearchBarState()
+    val query by remember { derivedStateOf { textFieldState.text.toString() } }
     var categoryId by rememberSaveable { mutableStateOf<String?>(null) }
 
     val list: List<Faq> = remember(query, categoryId) {
@@ -88,78 +100,62 @@ fun FaqScreen(initialQuery: String = "") {
         if (cid == null) base else base.filter { it.categoryId == cid }
     }
 
-    val copy = rememberCopyAction()
+    // 复制反馈走 M3 官方 Snackbar（Toast 不参与 Material 主题体系）
+    val snackbarHostState = remember { SnackbarHostState() }
+    val copy = rememberCopyAction(snackbarHostState)
 
     Scaffold(
-        containerColor = androidx.compose.ui.graphics.Color.Transparent,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            TopAppBar(
-                title = {
-                    OutlinedTextField(
-                        value = query,
-                        onValueChange = { query = it },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(end = 8.dp),
+            AppBarWithSearch(
+                state = searchBarState,
+                inputField = {
+                    SearchBarDefaults.InputField(
+                        textFieldState = textFieldState,
+                        searchBarState = searchBarState,
+                        onSearch = { },
                         placeholder = {
-                            Text(
-                                "搜问题或报错，如 Permission denied、端口、OOM",
-                                style = MaterialTheme.typography.bodyMedium
-                            )
+                            Text(stringResource(R.string.search_faq_placeholder))
                         },
                         leadingIcon = {
                             Icon(
-                                Icons.Outlined.Search,
+                                Icons.Filled.Search,
                                 contentDescription = null,
                                 modifier = Modifier.size(20.dp)
                             )
                         },
                         trailingIcon = {
-                            if (query.isNotEmpty()) {
-                                IconButton(onClick = { query = "" }) {
+                            if (textFieldState.text.isNotEmpty()) {
+                                IconButton(onClick = {
+                                    textFieldState.edit { replace(0, length, "") }
+                                }) {
                                     Icon(
-                                        Icons.Outlined.Close,
-                                        contentDescription = "清空",
+                                        Icons.Filled.Close,
+                                        contentDescription = stringResource(R.string.action_clear),
                                         modifier = Modifier.size(20.dp)
                                     )
                                 }
                             }
-                        },
-                        singleLine = true,
-                        shape = CircleShape,
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                        keyboardActions = KeyboardActions(onSearch = { }),
-                        textStyle = MaterialTheme.typography.bodyLarge
+                        }
                     )
                 }
             )
         }
     ) { padding ->
         if (list.isEmpty()) {
-            Column(
+            // 官网式空状态：blob 装图标 + 大字标题
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
-                    .padding(32.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
+                ,
+                contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    Icons.AutoMirrored.Outlined.HelpOutline,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(48.dp)
-                )
-                Text(
-                    text = "没有匹配的问题",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(top = 16.dp)
-                )
-                Text(
-                    text = "换个关键词试试，或清空筛选条件",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 6.dp)
+                EmptyState(
+                    icon = Icons.AutoMirrored.Filled.HelpOutline,
+                    title = "没有匹配的问题",
+                    subtitle = "换个关键词试试，或清空筛选条件"
                 )
             }
             return@Scaffold
@@ -168,20 +164,20 @@ fun FaqScreen(initialQuery: String = "") {
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding),
-            contentPadding = PaddingValues(bottom = 96.dp)
+                .padding(padding)
+                ,
+            contentPadding = PaddingValues(bottom = navBarBottomInset())
         ) {
             item {
                 LazyRow(
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    contentPadding = PaddingValues(horizontal = Spacing.lg, vertical = Spacing.sm),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
                 ) {
                     item {
-                        FilterChip(
+                        FilledFilterChip(
                             selected = categoryId == null,
                             onClick = { categoryId = null },
-                            label = { Text("全部 ${Repository.faqCount}") },
-                            shape = CircleShape,
+                            label = { Text(stringResource(R.string.filter_all_count, Repository.faqCount)) },
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
                                 selectedLabelColor = MaterialTheme.colorScheme.onSecondaryContainer
@@ -190,13 +186,12 @@ fun FaqScreen(initialQuery: String = "") {
                     }
                     items(Repository.faqCategories) { cat ->
                         val count = Repository.faqs.count { it.categoryId == cat.id }
-                        FilterChip(
+                        FilledFilterChip(
                             selected = categoryId == cat.id,
                             onClick = {
                                 categoryId = if (categoryId == cat.id) null else cat.id
                             },
                             label = { Text("${cat.zh} $count") },
-                            shape = CircleShape,
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
                                 selectedLabelColor = MaterialTheme.colorScheme.onSecondaryContainer
@@ -210,7 +205,7 @@ fun FaqScreen(initialQuery: String = "") {
                 FaqCard(
                     faq = faq,
                     onCopy = copy,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+                    modifier = Modifier.padding(horizontal = Spacing.lg, vertical = Spacing.xs)
                 )
             }
 
@@ -219,7 +214,7 @@ fun FaqScreen(initialQuery: String = "") {
                     text = "共 ${list.size} 条 · 命令均可一键复制到实战终端执行",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp)
+                    modifier = Modifier.padding(horizontal = Spacing.lg, vertical = Spacing.md)
                 )
             }
         }
@@ -239,9 +234,10 @@ private fun FaqCard(
         modifier = modifier
             .fillMaxWidth()
             .animateContentSize(),
-        shape = MaterialTheme.shapes.large
+        // M3 Expressive：内容卡取 largeIncreased 档（20dp），卡内边距 16dp
+        shape = MaterialTheme.shapes.largeIncreased
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
+        Column(modifier = Modifier.padding(Spacing.lg)) {
             Row(verticalAlignment = Alignment.Top) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
@@ -253,11 +249,11 @@ private fun FaqCard(
                         text = Repository.faqCategoryZh(faq.categoryId),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(top = 4.dp)
+                        modifier = Modifier.padding(top = Spacing.xs)
                     )
                 }
                 Icon(
-                    imageVector = if (expanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
+                    imageVector = if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(22.dp)
@@ -265,21 +261,19 @@ private fun FaqCard(
             }
 
             if (faq.symptom.isNotBlank()) {
-                // 同心圆角：外卡 20.dp 与内块间距 14.dp，圆角差 20-14=6.dp
+                // 同心圆角：外卡 20.dp（shapes.largeIncreased）与内块间距 16.dp，圆角差 20-16=4.dp
                 Surface(
-                    shape = RoundedCornerShape(6.dp),
+                    shape = MaterialTheme.shapes.extraSmall,
                     color = MaterialTheme.colorScheme.surfaceContainerHigh,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 10.dp)
+                        .padding(top = Spacing.sm)
                 ) {
                     Text(
                         text = faq.symptom,
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            fontFamily = FontFamily.Monospace
-                        ),
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(12.dp)
+                        modifier = Modifier.padding(Spacing.md)
                     )
                 }
             }
@@ -289,19 +283,19 @@ private fun FaqCard(
                     val (label, color) = when (faq.danger) {
                         Danger.DANGEROUS -> "高危：可能丢失数据，先备份" to MaterialTheme.colorScheme.error
                         Danger.CAREFUL -> "谨慎：先确认影响范围" to MaterialTheme.colorScheme.tertiary
-                        else -> "" to MaterialTheme.colorScheme.onSurfaceVariant
+                        Danger.NONE -> "" to MaterialTheme.colorScheme.onSurfaceVariant
                     }
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(top = 12.dp)
+                        modifier = Modifier.padding(top = Spacing.md)
                     ) {
                         Icon(
-                            Icons.Outlined.WarningAmber,
+                            Icons.Filled.WarningAmber,
                             contentDescription = null,
                             tint = color,
                             modifier = Modifier.size(16.dp)
                         )
-                        Spacer(Modifier.width(6.dp))
+                        Spacer(Modifier.width(Spacing.sm))
                         Text(
                             text = label,
                             style = MaterialTheme.typography.labelMedium,
@@ -315,7 +309,7 @@ private fun FaqCard(
                         text = "原因：${faq.cause}",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(top = 12.dp)
+                        modifier = Modifier.padding(top = Spacing.md)
                     )
                 }
 
@@ -323,11 +317,11 @@ private fun FaqCard(
                     text = "处理办法",
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(top = 14.dp, bottom = 6.dp)
+                    modifier = Modifier.padding(top = Spacing.lg, bottom = Spacing.xs)
                 )
 
                 faq.steps.forEachIndexed { index, step ->
-                    Row(modifier = Modifier.padding(top = 8.dp)) {
+                    Row(modifier = Modifier.padding(top = Spacing.sm)) {
                         Surface(
                             shape = CircleShape,
                             color = MaterialTheme.colorScheme.primaryContainer,
@@ -344,7 +338,7 @@ private fun FaqCard(
                                 )
                             }
                         }
-                        Spacer(Modifier.width(10.dp))
+                        Spacer(Modifier.width(Spacing.sm))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = step.zh,
@@ -355,15 +349,16 @@ private fun FaqCard(
                                 CodeBlock(
                                     code = step.command,
                                     onCopy = onCopy,
-                                    // 同心圆角：外卡 20.dp 与代码块间距 14.dp，圆角差 20-14=6.dp
-                                    shape = RoundedCornerShape(6.dp),
-                                    modifier = Modifier.padding(top = 6.dp)
+                                    // 同心圆角：外卡 20.dp（shapes.largeIncreased）与代码块间距 16.dp，
+                                    // 圆角差 20-16=4.dp（full 圆形序号徽章走 full，同为标准档位）
+                                    shape = MaterialTheme.shapes.extraSmall,
+                                    modifier = Modifier.padding(top = Spacing.sm)
                                 )
                             }
                         }
                     }
                 }
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(Spacing.xs))
             }
         }
     }

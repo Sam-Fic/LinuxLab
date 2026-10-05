@@ -55,7 +55,12 @@ android {
     kotlin {
         compilerOptions {
             jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
-            freeCompilerArgs.add("-opt-in=androidx.compose.material3.ExperimentalMaterial3Api")
+            freeCompilerArgs.addAll(
+                "-opt-in=androidx.compose.material3.ExperimentalMaterial3Api",
+                // M3 Expressive（MaterialExpressiveTheme / MotionScheme.expressive /
+                // Wavy·LoadingIndicator 等）在 material3 1.5 线仍是 experimental API
+                "-opt-in=androidx.compose.material3.ExperimentalMaterial3ExpressiveApi"
+            )
         }
     }
     buildFeatures { compose = true }
@@ -91,15 +96,14 @@ dependencies {
     // 解压内置的 Alpine rootfs（tar.gz）
     implementation("org.apache.commons:commons-compress:1.26.2")
 
-    // 液态玻璃效果（Apache-2.0，来自 Kyant0/AndroidLiquidGlass）
-    implementation("io.github.kyant0:backdrop:2.0.1")
-    implementation("io.github.kyant0:shapes:1.2.1")
-
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.compose.material3:material3")
+    // 显式钉在 1.5 线：BOM 2026.09 只带到 material3 1.4.0（Expressive API 在该版为 internal），
+    // MaterialExpressiveTheme / MotionScheme.expressive / Wavy·Loading Indicator 等
+    // 公开 Expressive API 均自 1.5.0-alpha 起提供
+    implementation("androidx.compose.material3:material3:1.5.0-alpha29")
     implementation("androidx.compose.material:material-icons-extended")
 
     debugImplementation("androidx.compose.ui:ui-tooling")

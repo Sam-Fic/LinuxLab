@@ -33,26 +33,33 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.Computer
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Computer
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MediumFlexibleTopAppBar
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedListItem
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.linuxlab.starter.data.Repository
@@ -64,6 +71,11 @@ import com.linuxlab.starter.ui.components.DesktopDiagram
 import com.linuxlab.starter.ui.components.DesktopLayerDiagram
 import com.linuxlab.starter.ui.components.SectionTitle
 import com.linuxlab.starter.ui.components.rememberCopyAction
+import androidx.compose.ui.res.stringResource
+import com.linuxlab.starter.R
+import com.linuxlab.starter.ui.theme.Spacing
+import androidx.compose.foundation.layout.WindowInsets
+import com.linuxlab.starter.ui.components.navBarBottomInset
 
 /** 桌面环境教程：列表页 */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -72,27 +84,34 @@ fun DesktopEnvScreen(
     onBack: () -> Unit,
     onOpen: (id: String) -> Unit
 ) {
+    // Expressive 弹性顶栏：随内容滚动收起
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+
     Scaffold(
-        containerColor = androidx.compose.ui.graphics.Color.Transparent,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            TopAppBar(
-                title = { Text("桌面环境教程") },
+            MediumFlexibleTopAppBar(
+                title = { Text(stringResource(R.string.title_desktop_env_tutorial)) },
+                subtitle = { Text(stringResource(R.string.subtitle_desktop_env_tutorial)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
-                }
+                },
+                scrollBehavior = scrollBehavior
             )
         }
     ) { padding ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding),
-            contentPadding = PaddingValues(bottom = 24.dp)
+                .padding(padding)
+                ,
+            contentPadding = PaddingValues(bottom = navBarBottomInset())
         ) {
             item {
-                Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                Column(Modifier.padding(horizontal = Spacing.lg, vertical = Spacing.sm)) {
                     Text(
                         text = "桌面环境是什么？",
                         style = MaterialTheme.typography.titleMedium,
@@ -104,9 +123,9 @@ fun DesktopEnvScreen(
                             "登录界面里选「会话」，选的就是其中的桌面环境。",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 6.dp)
+                        modifier = Modifier.padding(top = Spacing.xs)
                     )
-                    Spacer(Modifier.height(12.dp))
+                    Spacer(Modifier.height(Spacing.md))
                     DesktopLayerDiagram(layers = Repository.desktopLayers)
                 }
             }
@@ -129,11 +148,13 @@ private fun DesktopEnvCard(env: DesktopEnv, onClick: () -> Unit) {
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp),
-        shape = MaterialTheme.shapes.large,
+            .padding(horizontal = Spacing.lg, vertical = Spacing.sm),
+        // 桌面环境卡：M3 Expressive largeIncreased 档（20dp），内容边距 12dp（密集卡档）
+        shape = MaterialTheme.shapes.largeIncreased,
         colors = CardDefaults.cardColors(containerColor = cs.surfaceContainerHigh)
     ) {
-        Column(Modifier.padding(6.dp)) {
+        Column(Modifier.padding(Spacing.md)) {
+            // 卡头：名称/窗口管理器 + 静态工具包徽章
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(
@@ -148,30 +169,34 @@ private fun DesktopEnvCard(env: DesktopEnv, onClick: () -> Unit) {
                         modifier = Modifier.padding(top = 2.dp)
                     )
                 }
-                AssistChip(
-                    onClick = onClick,
-                    label = { Text(env.toolkit, style = MaterialTheme.typography.labelSmall) },
-                    colors = AssistChipDefaults.assistChipColors(
-                        containerColor = cs.secondaryContainer,
-                        labelColor = cs.onSecondaryContainer
+                // 工具包是纯标签：用 Surface 徽章而不是 AssistChip（后者是可交互组件，且 32dp 高视觉过重）
+                Surface(
+                    shape = MaterialTheme.shapes.small,
+                    color = cs.secondaryContainer
+                ) {
+                    Text(
+                        text = env.toolkit,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = cs.onSecondaryContainer,
+                        modifier = Modifier.padding(horizontal = Spacing.sm, vertical = Spacing.xs)
                     )
-                )
+                }
             }
 
             // 整幅布局示意图：宽图才看得清面板 / Dock / 桌面元素的差别
-            // 同心递进：外层卡 20.dp、间距 6 → 图块 14.dp、间距 6 → 示意图 8.dp
+            // 同心递进：外层卡 20.dp（largeIncreased）− 内容 12.dp → 图块 8.dp − 边距 4.dp → 示意图 4.dp
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 6.dp),
-                shape = RoundedCornerShape(14.dp),
+                    .padding(top = Spacing.md),
+                shape = MaterialTheme.shapes.small,
                 color = cs.surfaceContainerLowest
             ) {
                 DesktopDiagram(
                     spec = env.layout,
                     detailed = false,
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.padding(6.dp)
+                    shape = MaterialTheme.shapes.extraSmall,
+                    modifier = Modifier.padding(Spacing.xs)
                 )
             }
 
@@ -179,9 +204,9 @@ private fun DesktopEnvCard(env: DesktopEnv, onClick: () -> Unit) {
             FlowRow(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 10.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+                    .padding(top = Spacing.md),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+                verticalArrangement = Arrangement.spacedBy(Spacing.sm)
             ) {
                 env.layout.features().forEach { feature ->
                     FeatureTag(text = feature)
@@ -193,7 +218,7 @@ private fun DesktopEnvCard(env: DesktopEnv, onClick: () -> Unit) {
                 style = MaterialTheme.typography.bodySmall,
                 color = cs.onSurfaceVariant,
                 maxLines = 3,
-                modifier = Modifier.padding(top = 8.dp)
+                modifier = Modifier.padding(top = Spacing.sm)
             )
         }
     }
@@ -204,9 +229,10 @@ private fun FeatureTag(text: String) {
     val cs = MaterialTheme.colorScheme
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(6.dp))
+            // 特性标签：走主题 small 档（Expressive 8dp），内边距 8/4（4dp 网格）
+            .clip(MaterialTheme.shapes.small)
             .background(cs.surfaceContainerHighest)
-            .padding(horizontal = 7.dp, vertical = 3.dp)
+            .padding(horizontal = Spacing.sm, vertical = Spacing.xs)
     ) {
         Text(
             text = text,
@@ -223,12 +249,13 @@ private fun FeatureTag(text: String) {
 fun DesktopEnvDetailScreen(id: String, onBack: () -> Unit) {
     val env = Repository.desktopById(id) ?: run {
         Scaffold(
-        containerColor = androidx.compose.ui.graphics.Color.Transparent,topBar = {
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        topBar = {
             TopAppBar(
-                title = { Text("桌面环境") },
+                title = { Text(stringResource(R.string.title_desktop_env)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 }
             )
@@ -236,50 +263,61 @@ fun DesktopEnvDetailScreen(id: String, onBack: () -> Unit) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(padding),
+                    .padding(padding)
+                ,
                 contentAlignment = Alignment.Center
             ) {
-                Text("未找到该桌面环境")
+                Text(stringResource(R.string.empty_desktop_env_not_found))
             }
         }
         return
     }
-    val copy = rememberCopyAction()
+    // 复制反馈走 M3 官方 Snackbar（Toast 不参与 Material 主题体系）
+    val snackbarHostState = remember { SnackbarHostState() }
+    val copy = rememberCopyAction(snackbarHostState)
     val cs = MaterialTheme.colorScheme
 
+    // Expressive 弹性顶栏：随内容滚动收起
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+
     Scaffold(
-        containerColor = androidx.compose.ui.graphics.Color.Transparent,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            TopAppBar(
+            MediumFlexibleTopAppBar(
                 title = { Text(env.name) },
+                subtitle = { Text("${env.toolkit} · ${env.windowManager}") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
-                }
+                },
+                scrollBehavior = scrollBehavior
             )
         }
     ) { padding ->
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(bottom = 24.dp)
+            modifier = Modifier.fillMaxSize().padding(padding)
+                ,
+            contentPadding = PaddingValues(bottom = navBarBottomInset())
         ) {
             item {
-                Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                    // 大图：同心圆角，外层 14.dp、间距 8 → 示意图 6.dp
+                Column(Modifier.padding(horizontal = Spacing.lg, vertical = Spacing.sm)) {
+                    // 大图：与列表卡同一套同心递进 —— 图块 8.dp − 边距 4.dp → 示意图 4.dp
                     Surface(
-                        shape = RoundedCornerShape(14.dp),
+                        shape = MaterialTheme.shapes.small,
                         color = cs.surfaceContainerLowest
                     ) {
                         DesktopDiagram(
                             spec = env.layout,
                             detailed = true,
-                            shape = RoundedCornerShape(6.dp),
-                            modifier = Modifier.padding(8.dp)
+                            shape = MaterialTheme.shapes.extraSmall,
+                            modifier = Modifier.padding(Spacing.xs)
                         )
                     }
                     // 图注
-                    Column(Modifier.padding(top = 10.dp)) {
+                    Column(Modifier.padding(top = Spacing.md)) {
                         env.layoutNotes.forEach { note ->
                             Text(
                                 text = note,
@@ -297,15 +335,15 @@ fun DesktopEnvDetailScreen(id: String, onBack: () -> Unit) {
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 4.dp),
-                    shape = MaterialTheme.shapes.large,
+                        .padding(horizontal = Spacing.lg, vertical = Spacing.xs),
+                    shape = MaterialTheme.shapes.largeIncreased,
                     color = cs.primaryContainer
                 ) {
                     Text(
                         text = env.zh,
                         style = MaterialTheme.typography.bodyMedium,
                         color = cs.onPrimaryContainer,
-                        modifier = Modifier.padding(14.dp)
+                        modifier = Modifier.padding(Spacing.lg)
                     )
                 }
             }
@@ -315,11 +353,11 @@ fun DesktopEnvDetailScreen(id: String, onBack: () -> Unit) {
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 4.dp),
-                    shape = MaterialTheme.shapes.large,
+                        .padding(horizontal = Spacing.lg, vertical = Spacing.xs),
+                    shape = MaterialTheme.shapes.largeIncreased,
                     color = cs.surfaceContainerHigh
                 ) {
-                    Column(Modifier.padding(14.dp)) {
+                    Column(Modifier.padding(Spacing.lg)) {
                         InfoRow("图形工具包", env.toolkit)
                         InfoRow("默认窗口管理器", env.windowManager)
                         InfoRow("资源占用", "${env.level}（${env.memory}）")
@@ -329,17 +367,23 @@ fun DesktopEnvDetailScreen(id: String, onBack: () -> Unit) {
             }
 
             item { SectionTitle(text = "常用快捷键（${env.shortcuts.size}）") }
-            items(env.shortcuts, key = { it.keys }) { KeyRow(it) }
+            itemsIndexed(env.shortcuts, key = { _, item -> item.keys }) { index, item ->
+                KeyRow(
+                    binding = item,
+                    index = index,
+                    count = env.shortcuts.size
+                )
+            }
 
             item { SectionTitle(text = "怎么装") }
             item {
-                Column(Modifier.padding(horizontal = 16.dp)) {
+                Column(Modifier.padding(horizontal = Spacing.lg)) {
                     env.installs.forEach { install ->
                         Text(
                             text = install.distro,
                             style = MaterialTheme.typography.labelLarge,
                             color = cs.primary,
-                            modifier = Modifier.padding(top = 10.dp, bottom = 4.dp)
+                            modifier = Modifier.padding(top = Spacing.sm, bottom = Spacing.xs)
                         )
                         if (install.cmd.startsWith("sudo") || install.cmd.startsWith("yay") ||
                             install.cmd.startsWith("setup-desktop")
@@ -361,13 +405,13 @@ fun DesktopEnvDetailScreen(id: String, onBack: () -> Unit) {
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 4.dp),
-                    shape = MaterialTheme.shapes.large,
+                        .padding(horizontal = Spacing.lg, vertical = Spacing.xs),
+                    shape = MaterialTheme.shapes.largeIncreased,
                     color = cs.tertiaryContainer
                 ) {
-                    Column(Modifier.padding(14.dp)) {
+                    Column(Modifier.padding(Spacing.lg)) {
                         env.tips.forEachIndexed { index, tip ->
-                            Row(Modifier.padding(vertical = 3.dp)) {
+                            Row(Modifier.padding(vertical = Spacing.xs)) {
                                 Text(
                                     text = "${index + 1}.",
                                     style = MaterialTheme.typography.bodyMedium,
@@ -377,7 +421,7 @@ fun DesktopEnvDetailScreen(id: String, onBack: () -> Unit) {
                                     text = tip,
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = cs.onTertiaryContainer,
-                                    modifier = Modifier.padding(start = 8.dp)
+                                    modifier = Modifier.padding(start = Spacing.sm)
                                 )
                             }
                         }
@@ -389,14 +433,14 @@ fun DesktopEnvDetailScreen(id: String, onBack: () -> Unit) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start = 20.dp, top = 18.dp, bottom = 8.dp),
+                        .padding(start = Spacing.lg, top = Spacing.lg, bottom = Spacing.sm),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        Icons.Outlined.Computer,
+                        Icons.Filled.Computer,
                         contentDescription = null,
                         tint = cs.onSurfaceVariant,
-                        modifier = Modifier.padding(end = 8.dp)
+                        modifier = Modifier.padding(end = Spacing.sm)
                     )
                     Text(
                         text = "提示：登录后可在显示管理器（登录界面）的「会话 / 齿轮」里切换已安装的桌面环境。",
@@ -414,7 +458,7 @@ private fun InfoRow(label: String, value: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 5.dp),
+            .padding(vertical = Spacing.xs),
         verticalAlignment = Alignment.Top
     ) {
         Text(
@@ -432,37 +476,38 @@ private fun InfoRow(label: String, value: String) {
     }
 }
 
+/** 快捷键行：M3 Expressive SegmentedListItem，键帽作为 leadingContent。 */
 @Composable
-private fun KeyRow(binding: KeyBinding) {
-    Surface(
+private fun KeyRow(
+    binding: KeyBinding,
+    index: Int,
+    count: Int
+) {
+    SegmentedListItem(
+        shapes = ListItemDefaults.segmentedShapes(index = index, count = count),
+        colors = ListItemDefaults.segmentedColors(),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 3.dp),
-        // 同心圆角：外层 20.dp（shapes.large）、内层键帽 10.dp 与间距 10.dp，圆角差 20-10=10.dp
-        shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surfaceContainerHigh
-    ) {
-        Row(
-            modifier = Modifier.padding(10.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+            // 官方分段列表项之间留 2dp 视觉间隔（上下各 1dp）
+            .padding(horizontal = Spacing.lg, vertical = 1.dp),
+        leadingContent = {
             Surface(
-                shape = RoundedCornerShape(10.dp),
+                shape = MaterialTheme.shapes.small,
                 color = MaterialTheme.colorScheme.secondaryContainer
             ) {
                 Text(
                     text = binding.keys,
                     style = MaterialTheme.typography.labelMedium.copy(fontFamily = FontFamily.Monospace),
                     color = MaterialTheme.colorScheme.onSecondaryContainer,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                    modifier = Modifier.padding(horizontal = Spacing.sm, vertical = Spacing.xs)
                 )
             }
-            Text(
-                text = binding.desc,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(start = 12.dp).weight(1f)
-            )
         }
+    ) {
+        Text(
+            text = binding.desc,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
     }
 }

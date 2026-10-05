@@ -18,13 +18,10 @@
 
 package com.linuxlab.starter.ui.screens
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -32,47 +29,50 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.Close
-import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.SearchOff
+import androidx.compose.material3.AppBarWithSearch
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberSearchBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import com.linuxlab.starter.data.Repository
 import com.linuxlab.starter.data.UserStore
-import com.linuxlab.starter.model.Command
 import com.linuxlab.starter.model.Faq
 import com.linuxlab.starter.ui.components.CommandRow
+import com.linuxlab.starter.ui.components.EmptyState
+import com.linuxlab.starter.ui.components.FilledFilterChip
+import androidx.compose.ui.res.stringResource
+import com.linuxlab.starter.R
+import com.linuxlab.starter.ui.theme.Spacing
+import androidx.compose.foundation.layout.WindowInsets
+import com.linuxlab.starter.ui.components.navBarBottomInset
 
+/** 全局搜索：M3 原生「应用栏 + 搜索框」（AppBarWithSearch），下方为分类筛选与结果列表 */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(
@@ -81,10 +81,12 @@ fun SearchScreen(
     onFaq: (String) -> Unit = {}
 ) {
     val favorites by UserStore.favorites.collectAsState()
-    var query by rememberSaveable { mutableStateOf("") }
+    val textFieldState = rememberTextFieldState()
+    val searchBarState = rememberSearchBarState()
+    val query by remember { derivedStateOf { textFieldState.text.toString() } }
     var categoryId by rememberSaveable { mutableStateOf<String?>(null) }
 
-    val results: List<Command> = remember(query, categoryId) {
+    val results: List<com.linuxlab.starter.model.Command> = remember(query, categoryId) {
         val base = if (query.isBlank()) Repository.all else Repository.search(query)
         val cid = categoryId
         if (cid == null) base else base.filter { it.categoryId == cid }
@@ -95,58 +97,45 @@ fun SearchScreen(
         if (query.isBlank()) emptyList() else Repository.faqSearch(query).take(5)
     }
 
-    val focusRequester = remember { FocusRequester() }
-    LaunchedEffect(Unit) { focusRequester.requestFocus() }
-
-    BackHandler(enabled = query.isNotBlank()) { query = "" }
-
     Scaffold(
-        containerColor = androidx.compose.ui.graphics.Color.Transparent,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
-            TopAppBar(
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "返回")
-                    }
-                },
-                title = {
-                    OutlinedTextField(
-                        value = query,
-                        onValueChange = { query = it },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .focusRequester(focusRequester)
-                            .padding(end = 8.dp),
+            AppBarWithSearch(
+                state = searchBarState,
+                inputField = {
+                    SearchBarDefaults.InputField(
+                        textFieldState = textFieldState,
+                        searchBarState = searchBarState,
+                        onSearch = { },
                         placeholder = {
-                            Text(
-                                "命令名 / 用途 / 示例，如 权限、log、kill",
-                                style = MaterialTheme.typography.bodyMedium
-                            )
+                            Text(stringResource(R.string.search_command_placeholder))
                         },
                         leadingIcon = {
                             Icon(
-                                Icons.Outlined.Search,
+                                Icons.Filled.Search,
                                 contentDescription = null,
                                 modifier = Modifier.size(20.dp)
                             )
                         },
                         trailingIcon = {
-                            if (query.isNotEmpty()) {
-                                IconButton(onClick = { query = "" }) {
+                            if (textFieldState.text.isNotEmpty()) {
+                                IconButton(onClick = {
+                                    textFieldState.edit { replace(0, length, "") }
+                                }) {
                                     Icon(
-                                        Icons.Outlined.Close,
-                                        contentDescription = "清空",
+                                        Icons.Filled.Close,
+                                        contentDescription = stringResource(R.string.action_clear),
                                         modifier = Modifier.size(20.dp)
                                     )
                                 }
                             }
-                        },
-                        singleLine = true,
-                        shape = CircleShape,
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                        keyboardActions = KeyboardActions(onSearch = { }),
-                        textStyle = MaterialTheme.typography.bodyLarge
+                        }
                     )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
+                    }
                 }
             )
         }
@@ -155,18 +144,18 @@ fun SearchScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                
         ) {
             // 分类筛选
             LazyRow(
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                contentPadding = PaddingValues(horizontal = Spacing.lg, vertical = Spacing.sm),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
             ) {
                 item {
-                    FilterChip(
+                    FilledFilterChip(
                         selected = categoryId == null,
                         onClick = { categoryId = null },
-                        label = { Text("全部") },
-                        shape = CircleShape,
+                        label = { Text(stringResource(R.string.filter_all)) },
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
                             selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -174,13 +163,12 @@ fun SearchScreen(
                     )
                 }
                 items(Repository.groups) { group ->
-                    FilterChip(
+                    FilledFilterChip(
                         selected = categoryId == group.id,
                         onClick = {
                             categoryId = if (categoryId == group.id) null else group.id
                         },
                         label = { Text("${group.zh} (${group.commands.size})") },
-                        shape = CircleShape,
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
                             selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -193,7 +181,7 @@ fun SearchScreen(
                 text = if (query.isBlank()) "共 ${results.size} 条命令" else "找到 ${results.size} 条结果",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp)
+                modifier = Modifier.padding(horizontal = Spacing.lg, vertical = Spacing.sm)
             )
 
             if (faqHits.isNotEmpty()) {
@@ -201,26 +189,23 @@ fun SearchScreen(
                     text = "常见问题排查",
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.tertiary,
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
+                    modifier = Modifier.padding(horizontal = Spacing.lg, vertical = Spacing.sm)
                 )
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f, fill = false)
+                        .weight(1f, fill = false),
+                    contentPadding = PaddingValues(bottom = navBarBottomInset(Spacing.sm))
                 ) {
-                    items(faqHits, key = { it.id }) { faq ->
-                        // M3 标准列表项（ListView 行组件）+ clickable（1.4.0 ListItem 无内置 onClick）
-                        ListItem(
+                    itemsIndexed(faqHits, key = { _, faq -> faq.id }) { index, faq ->
+                        // M3 Expressive 分段列表项：常见问题作为一组，不再用分割线
+                        SegmentedListItem(
+                            onClick = { onFaq(query) },
+                            shapes = ListItemDefaults.segmentedShapes(index = index, count = faqHits.size),
+                            colors = ListItemDefaults.segmentedColors(),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { onFaq(query) },
-                            headlineContent = {
-                                Text(
-                                    text = faq.title,
-                                    style = MaterialTheme.typography.titleSmall,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            },
+                                .padding(vertical = 1.dp),
                             supportingContent = {
                                 Column {
                                     if (faq.symptom.isNotBlank()) {
@@ -237,11 +222,13 @@ fun SearchScreen(
                                     )
                                 }
                             }
-                        )
-                        androidx.compose.material3.HorizontalDivider(
-                            modifier = Modifier.padding(horizontal = 20.dp),
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                        )
+                        ) {
+                            Text(
+                                text = faq.title,
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
                 }
             }
@@ -250,34 +237,26 @@ fun SearchScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(32.dp),
+                        .weight(1f),
                     contentAlignment = Alignment.TopCenter
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = "没有找到「$query」相关命令",
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        Text(
-                            text = "试试更短的关键词，例如 ls、权限、日志、kill",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(top = 8.dp)
-                        )
-                    }
+                    // 官网式空状态：blob 装图标 + 大字标题
+                    EmptyState(
+                        icon = Icons.Filled.SearchOff,
+                        title = "没有找到「$query」相关命令",
+                        subtitle = "试试更短的关键词，例如 ls、权限、日志、kill"
+                    )
                 }
             } else {
                 LazyColumn(modifier = Modifier.fillMaxSize().weight(1f)) {
-                    items(results, key = { it.index }) { command ->
+                    itemsIndexed(results, key = { _, command -> command.index }) { index, command ->
                         CommandRow(
                             command = command,
+                            index = index,
+                            count = results.size,
                             favorite = favorites.contains(command.index),
                             onToggleFavorite = { UserStore.toggleFavorite(command.index) },
                             onClick = { onCommand(command.index) }
-                        )
-                        androidx.compose.material3.HorizontalDivider(
-                            modifier = Modifier.padding(horizontal = 20.dp),
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                         )
                     }
                     item { androidx.compose.foundation.layout.Spacer(Modifier.size(24.dp)) }

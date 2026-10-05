@@ -20,16 +20,17 @@ package com.linuxlab.starter.ui.screens
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -43,13 +44,17 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.linuxlab.starter.data.Repository
 import com.linuxlab.starter.data.UserStore
 import com.linuxlab.starter.model.CommandGroup
 import com.linuxlab.starter.ui.components.CategoryIcon
 import com.linuxlab.starter.ui.components.CommandRow
+import androidx.compose.ui.res.stringResource
+import com.linuxlab.starter.R
+import com.linuxlab.starter.ui.theme.Spacing
+import androidx.compose.foundation.layout.WindowInsets
+import com.linuxlab.starter.ui.components.navBarBottomInset
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,18 +67,18 @@ fun CategoryScreen(
     val favorites by UserStore.favorites.collectAsState()
 
     Scaffold(
-        containerColor = androidx.compose.ui.graphics.Color.Transparent,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
                 title = {
                     Column {
                         Text(
-                            text = group?.zh ?: "分类",
+                            text = group?.zh ?: stringResource(R.string.title_category_fallback),
                             style = MaterialTheme.typography.titleLarge
                         )
                         Text(
@@ -90,10 +95,11 @@ fun CategoryScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(padding),
+                    .padding(padding)
+                ,
                 contentAlignment = Alignment.Center
             ) {
-                Text("分类不存在", style = MaterialTheme.typography.bodyLarge)
+                Text(stringResource(R.string.empty_category_not_found), style = MaterialTheme.typography.bodyLarge)
             }
             return@Scaffold
         }
@@ -102,18 +108,22 @@ fun CategoryScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                ,
+            // 底部呼吸与其他列表页一致（24dp = 列表 8 + 页脚 padding 16），最后一条不贴手势条
+            contentPadding = PaddingValues(bottom = navBarBottomInset(Spacing.sm))
         ) {
             item {
                 Surface(
                     modifier = Modifier
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    shape = MaterialTheme.shapes.large,
+                        .padding(horizontal = Spacing.lg, vertical = Spacing.md),
+                    // 分类头卡：M3 Expressive largeIncreased 档（20dp）
+                    shape = MaterialTheme.shapes.largeIncreased,
                     color = MaterialTheme.colorScheme.secondaryContainer
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(18.dp),
+                            .padding(Spacing.lg),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         CategoryIcon(
@@ -121,7 +131,7 @@ fun CategoryScreen(
                             modifier = Modifier.size(32.dp),
                             tint = MaterialTheme.colorScheme.onSecondaryContainer
                         )
-                        Column(modifier = Modifier.padding(start = 14.dp)) {
+                        Column(modifier = Modifier.padding(start = Spacing.lg)) {
                             Text(
                                 text = "${group.zh} · ${group.commands.size} 条",
                                 style = MaterialTheme.typography.titleMedium,
@@ -137,27 +147,24 @@ fun CategoryScreen(
                 }
             }
 
-            items(group.commands) { command ->
+            itemsIndexed(group.commands, key = { _, command -> command.index }) { index, command ->
                 CommandRow(
                     command = command,
+                    index = index,
+                    count = group.commands.size,
                     showCategory = false,
                     favorite = favorites.contains(command.index),
                     onToggleFavorite = { UserStore.toggleFavorite(command.index) },
                     onClick = { onCommand(command.index) }
                 )
-                androidx.compose.material3.HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = 20.dp),
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                )
             }
 
             item {
                 Text(
-                    text = "命令名使用等宽字体显示，方便在终端里对照输入。",
+                    text = stringResource(R.string.label_mono_font_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontFamily = FontFamily.Monospace,
-                    modifier = Modifier.padding(24.dp)
+                    modifier = Modifier.padding(Spacing.lg)
                 )
             }
         }

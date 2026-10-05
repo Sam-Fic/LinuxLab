@@ -24,11 +24,10 @@
 | **终端命令教程** | 首页网格整体搬进来的教程页：先讲清「命令 + 选项 + 参数」的结构、给出 7 步建议学习顺序，下面才是 12 类命令网格 |
 | **权限计算器** | 勾选属主 / 属组 / 其他用户的读、写、执行，实时算出 755 / 644 等八进制值与 rwxr-xr-x 符号串，生成可直接复制的 chmod 命令；含 setuid / setgid / 粘滞位 |
 | **FHS 目录结构图解** | 可展开的 Linux 目录树（/etc、/var、/usr、/home、/dev…），点目录查看用途、典型文件与常用命令，顶部还有按用途分组的总览图 |
-| 自定义背景 | 设置里从相册选图作为全应用背景，可调浓度 |
 | 命令收藏 | 详情页 / 搜索 / 分类列表点星标收藏，首页「我的收藏」统一查看 |
 | **桌面环境教程** | 9 个桌面环境（GNOME/KDE/XFCE/LXQt/MATE/Cinnamon/Deepin/UKUI/平铺 WM），每个都配一张 **各不相同的矢量布局示意图**（面板位置 / 菜单样式 / Dock / 桌面图标 / 小组件 / Dash / 控制中心 + 专属主色），图下方标出「这张图该看哪里」，详情页还有 ①②③ 图注、快捷键与安装命令 |
 | 资源导航 | 54 个精选站点：Arch Wiki / Debian Wiki / man7 / explainshell / 鸟哥私房菜等文档问答，以及 Nginx、Docker、PostgreSQL 等知名开源项目官网 |
-| **液态玻璃底栏** | 基于 Backdrop（Apache-2.0）的真实液态玻璃：对屏幕内容做实时模糊 + 折射 + 高光，选中态强调色跟随莫奈取色；Android 12 以下自动降级为原生底栏 |
+| **M3 Expressive 标准底栏** | Material 3 Expressive 标准导航栏（NavigationBar）：胶囊选中指示器与配色全部取主题默认 token，莫奈取色自动跟随 |
 | 今日推荐 / 一键复制 / 外观设置 | 每日命令、示例复制、主题与莫奈取色开关 |
 
 ## 二、真实终端是怎么做到的（Termux 同款原理）
@@ -110,9 +109,11 @@ val colorScheme = when {
 ```
 Android 12+ 从壁纸取色，整站（含终端默认前景/背景之外的所有控件）自动跟随；关闭开关或低版本回退到内置的「终端深绿」配色。设置页可切跟随系统/浅色/深色，偏好存 SharedPreferences。
 
-底栏的液态玻璃同样接入了动态取色：玻璃本体保持中性半透明（浅色 `White/45%`、深色 `Black/38%`），
-**只让选中态的强调色取 `colorScheme.primary`**，这样浅色壁纸下玻璃不会发脏、深色壁纸下内容依然清晰。
-实现见 `ui/liquidglass/LiquidGlassNavBar.kt`（我们自己的适配层，GPL-3.0）。
+整体设计按 **Material 3 Expressive**（m3.material.io）执行：`MaterialExpressiveTheme` +
+`MotionScheme.expressive()` 弹性动效、Expressive 形状档位（卡片 largeIncreased 20dp /
+大卡 extraLarge 28dp、按钮与输入框默认胶囊 full）、按压形状形变，以及 Expressive 组件
+（终端首次启动的 `LoadingIndicator` 多边形装载动画 + `CircularWavyProgressIndicator` 波浪进度环、
+终端 CTRL/ALT 的多选分段按钮）。底栏为标准 `NavigationBar`，配色与指示器走主题 token，自动跟随莫奈取色。
 
 ## 五、命令库（221 条 / 12 分类）
 
@@ -131,10 +132,9 @@ LinuxStarter/
 │       ├── model/ data/                  # 命令库（221 条）
 │       ├── terminal/                     # 真实终端：pty / emulator / Bootstrap / Session
 │       │   └── (沙盒回退：VirtualFs.kt、TerminalEngine.kt)
-│       ├── ui/liquidglass/               # 液态玻璃底栏（改编自 Apache-2.0 的 Backdrop）
-│       └── ui/                           # AppNav、ThemePrefs、theme/、screens/
+│       └── ui/                           # AppNav、ThemePrefs、theme/、screens/、components/
 ├── setup-toolchain.sh                    # 一键准备构建环境（下载工具链与原生二进制）
-├── licenses/Apache-2.0.txt               # 上游 Apache-2.0 协议全文（Backdrop 等组件要求随附）
+├── licenses/Apache-2.0.txt               # 上游 Apache-2.0 协议全文（Apache 组件要求随附）
 ├── CONTRIBUTING.md / NOTICE / RELEASE.md  # 贡献指南、第三方许可声明、发布流程
 └── local.properties                      # sdk.dir
 ```
@@ -234,7 +234,6 @@ Termux 也正因为这条限制把 targetSdk 锁死在 28，并因此不再上�
 | 部分 | 协议 |
 | --- | --- |
 | 本项目自身源码（Kotlin / C） | GPL-3.0-or-later |
-| 液态玻璃：Backdrop 库 + 上游示例组件 | Apache-2.0（与 GPLv3 兼容，保留原声明；见 `licenses/Apache-2.0.txt`） |
 | 内置 Alpine Linux rootfs 中的 busybox | GPL-2.0-only |
 | 内置 Alpine Linux rootfs 中的 apk-tools | GPL-2.0 |
 | 静态 BusyBox（兜底 shell） | GPL-2.0-only |

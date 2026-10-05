@@ -18,6 +18,7 @@
 
 package com.linuxlab.starter.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,10 +42,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.automirrored.outlined.MenuBook
-import androidx.compose.material.icons.outlined.ExpandMore
-import androidx.compose.material.icons.outlined.Lightbulb
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Card
@@ -53,10 +54,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MediumFlexibleTopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -65,6 +67,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.linuxlab.starter.data.Repository
@@ -72,6 +75,12 @@ import com.linuxlab.starter.data.StudyPath
 import com.linuxlab.starter.data.StudyStep
 import com.linuxlab.starter.ui.components.CategoryCard
 import com.linuxlab.starter.ui.components.SectionTitle
+import com.linuxlab.starter.ui.components.FilledAssistChip
+import androidx.compose.ui.res.stringResource
+import com.linuxlab.starter.R
+import com.linuxlab.starter.ui.theme.Spacing
+import androidx.compose.foundation.layout.WindowInsets
+import com.linuxlab.starter.ui.components.navBarBottomInset
 
 /**
  * 终端命令教程。
@@ -88,24 +97,31 @@ fun TutorialScreen(
     // 「建议的学习顺序」是否展开（旋转屏幕后仍保持用户的选择）；默认折叠，不占版面
     var pathExpanded by rememberSaveable { mutableStateOf(false) }
 
+    // Expressive 弹性顶栏：随内容滚动收起
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+
     Scaffold(
-        containerColor = androidx.compose.ui.graphics.Color.Transparent,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            TopAppBar(
-                title = { Text("终端命令教程") },
+            MediumFlexibleTopAppBar(
+                title = { Text(stringResource(R.string.title_terminal_tutorial)) },
+                subtitle = { Text(stringResource(R.string.subtitle_terminal_tutorial)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
-                }
+                },
+                scrollBehavior = scrollBehavior
             )
         }
     ) { padding ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding),
-            contentPadding = PaddingValues(bottom = 24.dp)
+                .padding(padding)
+                ,
+            contentPadding = PaddingValues(bottom = navBarBottomInset())
         ) {
             item { CommandAnatomyCard() }
 
@@ -128,14 +144,20 @@ fun TutorialScreen(
                     exit = fadeOut() + shrinkVertically()
                 ) {
                     Column {
-                        StudyPath.forEach { step ->
-                            StudyStepCard(step = step, onCategory = onCategory)
+                        // 官网"步骤"式学习路径：大号圆形序号 + 竖向连接线
+                        StudyPath.forEachIndexed { index, step ->
+                            StudyStepCard(
+                                step = step,
+                                index = index,
+                                isLast = index == StudyPath.lastIndex,
+                                onCategory = onCategory
+                            )
                         }
                         Text(
                             text = "不确定从哪开始？就按上面的顺序，一步一步往下走。",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
+                            modifier = Modifier.padding(horizontal = Spacing.xl, vertical = Spacing.xs)
                         )
                     }
                 }
@@ -150,8 +172,8 @@ fun TutorialScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        .padding(horizontal = Spacing.lg),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.md)
                 ) {
                     rows[rowIndex].forEach { group ->
                         CategoryCard(
@@ -164,7 +186,7 @@ fun TutorialScreen(
                         Spacer(modifier = Modifier.weight(1f))
                     }
                 }
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(Spacing.md))
             }
 
             item { FooterHint() }
@@ -176,22 +198,22 @@ fun TutorialScreen(
 @Composable
 private fun CommandAnatomyCard() {
     val cs = MaterialTheme.colorScheme
-    Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+    Column(Modifier.padding(horizontal = Spacing.lg, vertical = Spacing.sm)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Surface(
                 // 品牌图标装饰块：走主题 small 档位
                 shape = MaterialTheme.shapes.small,
                 color = cs.primaryContainer,
-                modifier = Modifier.size(34.dp)
+                modifier = Modifier.size(40.dp)
             ) {
                 Icon(
-                    Icons.AutoMirrored.Outlined.MenuBook,
+                    Icons.AutoMirrored.Filled.MenuBook,
                     contentDescription = null,
-                    modifier = Modifier.padding(7.dp),
+                    modifier = Modifier.padding(Spacing.sm),
                     tint = cs.onPrimaryContainer
                 )
             }
-            Spacer(Modifier.width(10.dp))
+            Spacer(Modifier.width(Spacing.md))
             Text(
                 text = "一条命令长什么样",
                 style = MaterialTheme.typography.titleMedium,
@@ -202,27 +224,28 @@ private fun CommandAnatomyCard() {
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 10.dp),
-            // 同心圆角：外层 20.dp（shapes.large）、内层语法块距卡边缘 14.dp，圆角差 20-6=14.dp
-            shape = MaterialTheme.shapes.large,
+                .padding(top = Spacing.sm),
+            // 外层卡 20.dp（shapes.largeIncreased，Expressive 档位）、
+            // 内层语法块距卡边缘 16.dp，圆角差 20-16=4.dp
+            shape = MaterialTheme.shapes.largeIncreased,
             color = cs.surfaceContainerHigh
         ) {
-            Column(Modifier.padding(14.dp)) {
+            Column(Modifier.padding(Spacing.lg)) {
                 Text(
                     text = "命令  [选项]  [参数]",
                     style = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
                     color = cs.onSurfaceVariant
                 )
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(Spacing.md))
 
                 Surface(
-                    shape = RoundedCornerShape(6.dp),
+                    shape = MaterialTheme.shapes.extraSmall,
                     color = cs.surfaceContainerLowest
                 ) {
                     Row(
                         Modifier
                             .fillMaxWidth()
-                            .padding(14.dp),
+                            .padding(horizontal = Spacing.lg, vertical = Spacing.md),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
@@ -232,7 +255,7 @@ private fun CommandAnatomyCard() {
                             ),
                             color = cs.primary
                         )
-                        Spacer(Modifier.width(8.dp))
+                        Spacer(Modifier.width(Spacing.sm))
                         Text(
                             text = "-lah",
                             style = MaterialTheme.typography.titleMedium.copy(
@@ -240,7 +263,7 @@ private fun CommandAnatomyCard() {
                             ),
                             color = cs.secondary
                         )
-                        Spacer(Modifier.width(8.dp))
+                        Spacer(Modifier.width(Spacing.sm))
                         Text(
                             text = "/var/log",
                             style = MaterialTheme.typography.titleMedium.copy(
@@ -251,7 +274,7 @@ private fun CommandAnatomyCard() {
                     }
                 }
 
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(Spacing.md))
                 AnatomyLine(color = cs.primary, label = "命令", desc = "要跑哪个程序：ls 负责列出目录内容")
                 AnatomyLine(color = cs.secondary, label = "选项", desc = "怎么跑：-l 长格式、-a 含隐藏文件、-h 大小易读")
                 AnatomyLine(color = cs.tertiary, label = "参数", desc = "对谁跑：这里是 /var/log，省略则默认当前目录")
@@ -266,18 +289,17 @@ private fun AnatomyLine(color: androidx.compose.ui.graphics.Color, label: String
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = Spacing.xs),
         verticalAlignment = Alignment.Top
     ) {
         Box(
             modifier = Modifier
-                .padding(top = 5.dp)
+                .padding(top = Spacing.xs)
                 .size(8.dp)
-                .padding(0.dp)
         ) {
             Surface(shape = CircleShape, color = color, modifier = Modifier.size(8.dp)) {}
         }
-        Spacer(Modifier.width(8.dp))
+        Spacer(Modifier.width(Spacing.sm))
         Text(
             text = label,
             style = MaterialTheme.typography.labelLarge,
@@ -307,23 +329,23 @@ private fun CollapsibleHeader(
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp),
-        shape = MaterialTheme.shapes.medium,
+            .padding(horizontal = Spacing.lg, vertical = Spacing.sm),
+        // 折叠标题卡：形状走主题默认（M3 Expressive medium 档，Card 的标准档位）
         colors = CardDefaults.cardColors(containerColor = cs.surfaceContainerHigh)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = Spacing.lg, vertical = Spacing.md),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                imageVector = Icons.Outlined.Lightbulb,
+                imageVector = Icons.Filled.Lightbulb,
                 contentDescription = null,
                 tint = cs.primary,
                 modifier = Modifier.size(20.dp)
             )
-            Spacer(Modifier.width(10.dp))
+            Spacer(Modifier.width(Spacing.sm))
             Column(Modifier.weight(1f)) {
                 Text(
                     text = title,
@@ -337,8 +359,8 @@ private fun CollapsibleHeader(
                 )
             }
             Icon(
-                imageVector = Icons.Outlined.ExpandMore,
-                contentDescription = if (expanded) "收起" else "展开",
+                imageVector = Icons.Filled.ExpandMore,
+                contentDescription = if (expanded) stringResource(R.string.action_collapse) else stringResource(R.string.action_expand),
                 tint = cs.onSurfaceVariant,
                 modifier = Modifier
                     .size(22.dp)
@@ -348,54 +370,70 @@ private fun CollapsibleHeader(
     }
 }
 
+/** 学习路径步骤：大号圆形序号 + 竖向连接线 + 步骤内容（官网步骤式表达） */
 @Composable
-private fun StudyStepCard(step: StudyStep, onCategory: (String) -> Unit) {
+private fun StudyStepCard(
+    step: StudyStep,
+    index: Int,
+    isLast: Boolean,
+    onCategory: (String) -> Unit
+) {
     val cs = MaterialTheme.colorScheme
-    val index = StudyPath.indexOf(step)
-    Surface(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 5.dp),
-        shape = MaterialTheme.shapes.large,
-        color = cs.surfaceContainerHigh
+            .padding(horizontal = Spacing.xl)
     ) {
-        Column(Modifier.padding(14.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Surface(
-                    shape = CircleShape,
-                    color = cs.secondaryContainer,
-                    modifier = Modifier.size(26.dp)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text(
-                            text = "${index + 1}",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = cs.onSecondaryContainer
-                        )
-                    }
+        // 左列：大号序号圆 + 连接线
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Surface(
+                shape = CircleShape,
+                color = cs.primaryContainer,
+                modifier = Modifier.size(48.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                    Text(
+                        text = "${index + 1}",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = cs.onPrimaryContainer
+                    )
                 }
-                Spacer(Modifier.width(10.dp))
-                Text(
-                    text = step.title.substringAfter("· ").trim(),
-                    style = MaterialTheme.typography.titleSmall,
-                    color = cs.onSurface
+            }
+            if (!isLast) {
+                Box(
+                    modifier = Modifier
+                        .width(2.dp)
+                        .height(28.dp)
+                        .background(cs.outlineVariant)
                 )
             }
+        }
+        // 右列：标题 + 描述 + 对应分类入口
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = Spacing.lg, bottom = Spacing.xxl)
+        ) {
+            Text(
+                text = step.title.substringAfter("· ").trim(),
+                style = MaterialTheme.typography.titleSmall,
+                color = cs.onSurface
+            )
             Text(
                 text = step.desc,
                 style = MaterialTheme.typography.bodySmall,
                 color = cs.onSurfaceVariant,
-                modifier = Modifier.padding(top = 8.dp)
+                modifier = Modifier.padding(top = Spacing.xs)
             )
             FlowRow(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 10.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                    .padding(top = Spacing.sm),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+                verticalArrangement = Arrangement.spacedBy(Spacing.sm)
             ) {
                 step.groupIds.mapNotNull { Repository.groupById(it) }.forEach { group ->
-                    AssistChip(
+                    FilledAssistChip(
                         onClick = { onCategory(group.id) },
                         label = {
                             Text(
@@ -420,11 +458,11 @@ private fun FooterHint() {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        shape = MaterialTheme.shapes.large,
+            .padding(horizontal = Spacing.lg, vertical = Spacing.sm),
+        shape = MaterialTheme.shapes.largeIncreased,
         color = cs.secondaryContainer
     ) {
-        Column(Modifier.padding(14.dp)) {
+        Column(Modifier.padding(Spacing.lg)) {
             Text(
                 text = "怎么练",
                 style = MaterialTheme.typography.labelLarge,
@@ -435,7 +473,7 @@ private fun FooterHint() {
                     "那是一个真的 Linux 环境（Alpine + proot），随便折腾都不会弄坏手机。",
                 style = MaterialTheme.typography.bodySmall,
                 color = cs.onSecondaryContainer,
-                modifier = Modifier.padding(top = 6.dp)
+                modifier = Modifier.padding(top = Spacing.xs)
             )
         }
     }

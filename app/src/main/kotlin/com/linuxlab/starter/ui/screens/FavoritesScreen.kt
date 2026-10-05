@@ -29,13 +29,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.Star
-import androidx.compose.material.icons.outlined.StarOutline
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -52,6 +51,12 @@ import androidx.compose.ui.unit.dp
 import com.linuxlab.starter.data.Repository
 import com.linuxlab.starter.data.UserStore
 import com.linuxlab.starter.ui.components.CommandRow
+import com.linuxlab.starter.ui.components.EmptyState
+import androidx.compose.ui.res.stringResource
+import com.linuxlab.starter.R
+import com.linuxlab.starter.ui.theme.Spacing
+import androidx.compose.foundation.layout.WindowInsets
+import com.linuxlab.starter.ui.components.navBarBottomInset
 
 /** 我的收藏：列出收藏的命令，点右侧星标取消收藏 */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -67,47 +72,31 @@ fun FavoritesScreen(
     val cs = MaterialTheme.colorScheme
 
     Scaffold(
-        containerColor = androidx.compose.ui.graphics.Color.Transparent,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
-                title = { Text("我的收藏") },
+                title = { Text(stringResource(R.string.title_favorites)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 }
             )
         }
     ) { padding ->
         if (commands.isEmpty()) {
+            // 官网式空状态：blob 装图标 + 大字标题
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(padding)
-                    .padding(horizontal = 32.dp),
+                    .padding(padding),
                 contentAlignment = Alignment.Center
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        imageVector = Icons.Outlined.StarOutline,
-                        contentDescription = null,
-                        tint = cs.onSurfaceVariant,
-                        modifier = Modifier.size(48.dp)
-                    )
-                    Text(
-                        text = "还没有收藏的命令",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = cs.onSurface,
-                        modifier = Modifier.padding(top = 16.dp)
-                    )
-                    Text(
-                        text = "打开任意一条命令，点右上角的星标就能收藏；\n也可以在搜索结果里直接点星标。",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = cs.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 8.dp),
-                        lineHeight = MaterialTheme.typography.bodyMedium.lineHeight
-                    )
-                }
+                EmptyState(
+                    icon = Icons.Filled.StarBorder,
+                    title = stringResource(R.string.empty_favorites_none),
+                    subtitle = "打开任意一条命令，点右上角的星标就能收藏；\n也可以在搜索结果里直接点星标。"
+                )
             }
             return@Scaffold
         }
@@ -115,27 +104,26 @@ fun FavoritesScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding),
-            contentPadding = PaddingValues(bottom = 24.dp)
+                .padding(padding)
+                ,
+            contentPadding = PaddingValues(bottom = navBarBottomInset())
         ) {
             item {
                 Text(
                     text = "已收藏 ${commands.size} 条命令 · 点星标取消收藏",
                     style = MaterialTheme.typography.bodySmall,
                     color = cs.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp)
+                    modifier = Modifier.padding(horizontal = Spacing.lg, vertical = Spacing.sm)
                 )
             }
-            items(commands, key = { it.index }) { command ->
+            itemsIndexed(commands, key = { _, command -> command.index }) { index, command ->
                 CommandRow(
                     command = command,
+                    index = index,
+                    count = commands.size,
                     favorite = true,
                     onToggleFavorite = { UserStore.toggleFavorite(command.index) },
                     onClick = { onCommand(command.index) }
-                )
-                HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = 20.dp),
-                    color = cs.outlineVariant.copy(alpha = 0.5f)
                 )
             }
             item { Spacer(Modifier.height(80.dp)) }

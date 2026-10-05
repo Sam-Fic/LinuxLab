@@ -20,9 +20,9 @@ package com.linuxlab.starter.ui.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Shapes
+import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.MaterialExpressiveTheme
+import androidx.compose.material3.MotionScheme
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
@@ -31,7 +31,6 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 
 /** 主题模式 */
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
@@ -39,88 +38,127 @@ enum class ThemeMode { SYSTEM, LIGHT, DARK }
 /**
  * 关闭莫奈取色（或 Android 12 以下）时的兜底配色：
  * 取自 Linux / 终端气质的深绿 + 青绿主色。
+ *
+ * 颜色角色按 M3（m3.material.io）的完整 tonal 体系填满：
+ * primary/secondary/tertiary 三族 + surface 容器五档（Lowest→Highest）+
+ * surfaceDim/Bright、outlineVariant、inverse*、fixed 角色、scrim。
+ * 兜底深色模式同时启用高对比容器（M3 深色色板的 contrast level 处理方式）。
  */
 private val BrandGreen = Color(0xFF006C4C)
 private val BrandTeal = Color(0xFF3DDC97)
 
-private val LightColors = lightColorScheme(
+private val LightColors: ColorScheme = lightColorScheme(
     primary = BrandGreen,
     onPrimary = Color.White,
     primaryContainer = Color(0xFF8DF3C4),
     onPrimaryContainer = Color(0xFF002114),
+    primaryFixed = Color(0xFF8DF3C4),
+    primaryFixedDim = Color(0xFF57DBA4),
+    onPrimaryFixed = Color(0xFF002114),
+    onPrimaryFixedVariant = Color(0xFF005236),
     secondary = Color(0xFF4C6358),
     onSecondary = Color.White,
     secondaryContainer = Color(0xFFCFEDE0),
     onSecondaryContainer = Color(0xFF082018),
+    secondaryFixed = Color(0xFFCFEDE0),
+    secondaryFixedDim = Color(0xFFB3CCC0),
+    onSecondaryFixed = Color(0xFF082018),
+    onSecondaryFixedVariant = Color(0xFF354B41),
     tertiary = Color(0xFF3B5F8A),
     onTertiary = Color.White,
     tertiaryContainer = Color(0xFFD4E3FF),
     onTertiaryContainer = Color(0xFF001C36),
+    tertiaryFixed = Color(0xFFD4E3FF),
+    tertiaryFixedDim = Color(0xFFAFCBFF),
+    onTertiaryFixed = Color(0xFF001C36),
+    onTertiaryFixedVariant = Color(0xFF27476F),
+    error = Color(0xFFBA1A1A),
+    onError = Color.White,
+    errorContainer = Color(0xFFFFDAD6),
+    onErrorContainer = Color(0xFF410002),
     surface = Color(0xFFFAFDFB),
     onSurface = Color(0xFF191C1B),
     surfaceVariant = Color(0xFFDBE5DF),
     onSurfaceVariant = Color(0xFF404943),
     outline = Color(0xFF6F7973),
-    error = Color(0xFFBA1A1A),
-    onError = Color.White,
-    errorContainer = Color(0xFFFFDAD6),
-    onErrorContainer = Color(0xFF410002)
+    outlineVariant = Color(0xFFBFC9C2),
+    scrim = Color.Black,
+    inverseSurface = Color(0xFF2E3230),
+    inverseOnSurface = Color(0xFFEFF1EE),
+    inversePrimary = Color(0xFF57DBA4),
+    surfaceDim = Color(0xFFDAE0DB),
+    surfaceBright = Color(0xFFFAFDFB),
+    surfaceContainerLowest = Color(0xFFFFFFFF),
+    surfaceContainerLow = Color(0xFFF0F4F1),
+    surfaceContainer = Color(0xFFEAEFEB),
+    surfaceContainerHigh = Color(0xFFE4E9E5),
+    surfaceContainerHighest = Color(0xFFDFE4E0)
 )
 
-private val DarkColors = darkColorScheme(
+private val DarkColors: ColorScheme = darkColorScheme(
     primary = BrandTeal,
     onPrimary = Color(0xFF003827),
     primaryContainer = Color(0xFF005138),
     onPrimaryContainer = Color(0xFF8DF3C4),
+    primaryFixed = Color(0xFF8DF3C4),
+    primaryFixedDim = Color(0xFF57DBA4),
+    onPrimaryFixed = Color(0xFF002114),
+    onPrimaryFixedVariant = Color(0xFF005236),
     secondary = Color(0xFFB3CCC0),
     onSecondary = Color(0xFF1E352B),
     secondaryContainer = Color(0xFF354B41),
     onSecondaryContainer = Color(0xFFCFEDE0),
+    secondaryFixed = Color(0xFFCFEDE0),
+    secondaryFixedDim = Color(0xFFB3CCC0),
+    onSecondaryFixed = Color(0xFF082018),
+    onSecondaryFixedVariant = Color(0xFF354B41),
     tertiary = Color(0xFFAFCBFF),
     onTertiary = Color(0xFF0B3057),
     tertiaryContainer = Color(0xFF27476F),
     onTertiaryContainer = Color(0xFFD4E3FF),
+    tertiaryFixed = Color(0xFFD4E3FF),
+    tertiaryFixedDim = Color(0xFFAFCBFF),
+    onTertiaryFixed = Color(0xFF001C36),
+    onTertiaryFixedVariant = Color(0xFF27476F),
+    error = Color(0xFFFFB4AB),
+    onError = Color(0xFF690005),
+    errorContainer = Color(0xFF93000A),
+    onErrorContainer = Color(0xFFFFDAD6),
     surface = Color(0xFF101413),
     onSurface = Color(0xFFE0E3E0),
     surfaceVariant = Color(0xFF404943),
     onSurfaceVariant = Color(0xFFBFCBC3),
     outline = Color(0xFF8A968F),
-    error = Color(0xFFFFB4AB),
-    onError = Color(0xFF690005),
-    errorContainer = Color(0xFF93000A),
-    onErrorContainer = Color(0xFFFFDAD6)
+    outlineVariant = Color(0xFF3F4943),
+    scrim = Color.Black,
+    inverseSurface = Color(0xFFE0E3E0),
+    inverseOnSurface = Color(0xFF2D3230),
+    inversePrimary = Color(0xFF006C4C),
+    surfaceDim = Color(0xFF101413),
+    surfaceBright = Color(0xFF363A39),
+    surfaceContainerLowest = Color(0xFF0B0F0E),
+    surfaceContainerLow = Color(0xFF191C1B),
+    surfaceContainer = Color(0xFF1D2020),
+    surfaceContainerHigh = Color(0xFF272A2A),
+    surfaceContainerHighest = Color(0xFF323534)
 )
 
-val AppTypography = Typography()
-
 /**
- * Material 3 标准形状体系（五个档位）。
+ * Material 3 Expressive 主题（m3.material.io，material3 1.5 Expressive API）。
  *
- * 形状按 M3 Expressive（m3.material.io，2025.05）increased token 语义映射：
- * large = 20dp（官方 Large increased 20dp）、extraLarge = 32dp（官方 Extra large increased 32dp），
- * extraSmall/small/medium 保持 M3 默认（4/8/12）。组件默认形状随主题整体抬升。
- * 显式声明并注入 MaterialTheme，让所有标准组件（按钮、卡片、输入框、FAB 等）
- * 都能通过 `MaterialTheme.shapes` 语义化取形状，而不是散落的硬编码圆角。
+ * 与标准 M3 的差异全部由 [MaterialExpressiveTheme] 的 token 层承担：
+ * - **形状**：Expressive 形状档位 —— extraSmall 4 / small 8 / medium 12 / large 16 /
+ *   extraLarge 28，另有 largeIncreased 20 / extraLargeIncreased 32 / extraExtraLarge 48 /
+ *   full（胶囊）。按钮、输入框等组件默认取 full 胶囊 + 按压形变，都由主题默认值驱动；
+ * - **动效**：[MotionScheme.expressive] —— 空间动效换成带弹性的 spring
+ *   （default 空间 0.8/380、fast 空间 0.6/800），组件默认动画与应用内动画共用一套；
+ * - **类型**：沿用 M3 标准 Typography。
+ *
+ * 莫奈（Monet）动态取色：Android 12+ 且开关打开时从壁纸提取主色，整站跟随；
+ * 否则回退到上面的内置深绿品牌配色。
  *
  * 注意：项目卡片/列表存在「同心圆角」设计约束（内层圆角 = 外层圆角 − 间距），
- * 自定义圆角仍按该约束在组件内显式指定，不受本档位影响。
- */
-val AppShapes =
-    Shapes(
-        extraSmall = RoundedCornerShape(4.dp),
-        small = RoundedCornerShape(8.dp),
-        medium = RoundedCornerShape(12.dp),
-        large = RoundedCornerShape(20.dp),
-        extraLarge = RoundedCornerShape(32.dp),
-    )
-
-/**
- * Material 3 + 莫奈（Monet）动态取色主题。
- *
- * - Android 12（API 31）及以上且开启了「动态取色」时，
- *   通过 dynamicLightColorScheme / dynamicDarkColorScheme 从用户壁纸提取主色，
- *   整站控件（按钮、卡片、搜索栏、导航、状态栏）自动跟随壁纸变色。
- * - 低版本或用户关闭开关时，回退到内置的深绿品牌配色。
+ * 组件内仍按该约束以 Expressive 档位显式取值，注释里标明差值推导。
  */
 @Composable
 fun LinuxStarterTheme(
@@ -144,10 +182,10 @@ fun LinuxStarterTheme(
         else -> LightColors
     }
 
-    MaterialTheme(
+    MaterialExpressiveTheme(
         colorScheme = colorScheme,
-        typography = AppTypography,
-        shapes = AppShapes,
+        motionScheme = MotionScheme.expressive(),
+        typography = Typography(),
         content = content
     )
 }
