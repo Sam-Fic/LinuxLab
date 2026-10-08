@@ -81,6 +81,7 @@ import com.linuxlab.starter.R
 import com.linuxlab.starter.ui.theme.Spacing
 import androidx.compose.foundation.layout.WindowInsets
 import com.linuxlab.starter.ui.components.navBarBottomInset
+import androidx.compose.animation.core.animateFloatAsState
 
 /**
  * 终端命令教程。
@@ -358,13 +359,18 @@ private fun CollapsibleHeader(
                     color = cs.onSurfaceVariant
                 )
             }
+            val chevronRotation by animateFloatAsState(
+                targetValue = if (expanded) 180f else 0f,
+                animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
+                label = "chevron"
+            )
             Icon(
                 imageVector = Icons.Filled.ExpandMore,
                 contentDescription = if (expanded) stringResource(R.string.action_collapse) else stringResource(R.string.action_expand),
                 tint = cs.onSurfaceVariant,
                 modifier = Modifier
                     .size(22.dp)
-                    .graphicsLayer { rotationZ = if (expanded) 180f else 0f }
+                    .graphicsLayer { rotationZ = chevronRotation }
             )
         }
     }
@@ -441,9 +447,10 @@ private fun StudyStepCard(
                                 style = MaterialTheme.typography.labelMedium
                             )
                         },
+                        // 中性容器色：暗色莫奈下不再整排亮粉
                         colors = AssistChipDefaults.assistChipColors(
-                            containerColor = cs.tertiaryContainer,
-                            labelColor = cs.onTertiaryContainer
+                            containerColor = cs.surfaceContainerHigh,
+                            labelColor = cs.onSurface
                         )
                     )
                 }

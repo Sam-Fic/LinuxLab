@@ -68,6 +68,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.linuxlab.starter.data.Repository
 import com.linuxlab.starter.model.LinkItem
+import com.linuxlab.starter.ui.components.showKeyboardOnFocus
 import com.linuxlab.starter.ui.components.rememberCopyAction
 import com.linuxlab.starter.ui.components.FilledFilterChip
 import kotlinx.coroutines.launch
@@ -118,6 +119,7 @@ fun ResourceScreen() {
                 state = searchBarState,
                 inputField = {
                     SearchBarDefaults.InputField(
+                        modifier = Modifier.showKeyboardOnFocus(),
                         textFieldState = textFieldState,
                         searchBarState = searchBarState,
                         onSearch = { },

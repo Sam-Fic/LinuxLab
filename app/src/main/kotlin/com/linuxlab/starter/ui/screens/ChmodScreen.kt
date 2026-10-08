@@ -240,13 +240,13 @@ fun ChmodScreen(onBack: () -> Unit) {
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontFamily = FontFamily.Monospace
                             ),
-                            color = cs.onPrimaryContainer.copy(alpha = 0.85f),
+                            color = cs.onPrimaryContainer.copy(alpha = 0.9f),
                             modifier = Modifier.padding(top = Spacing.xs)
                         )
                         Text(
                             text = "ls -l 里看到的就是：$lsPreview",
                             style = MaterialTheme.typography.bodySmall,
-                            color = cs.onPrimaryContainer.copy(alpha = 0.75f),
+                            color = cs.onPrimaryContainer.copy(alpha = 0.8f),
                             modifier = Modifier.padding(top = Spacing.sm)
                         )
                     }

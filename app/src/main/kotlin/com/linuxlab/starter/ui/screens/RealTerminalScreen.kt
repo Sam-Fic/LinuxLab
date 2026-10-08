@@ -509,7 +509,7 @@ private fun InstallView(session: TerminalSession) {
             text = "约 3.8MB，只需一次，之后秒开（全程离线）",
             style = MaterialTheme.typography.bodySmall,
             // 固定深底上的次要文字：不能用主题 onSurfaceVariant（浅色主题下是深灰配深底）
-            color = TermForeground.copy(alpha = 0.7f),
+            color = TermForeground.copy(alpha = 0.8f),
             modifier = Modifier.padding(top = Spacing.md)
         )
     }
@@ -544,7 +544,7 @@ private fun FailedView(
         Text(
             text = "常见原因：设备不是 arm64、系统禁止 ptrace，或设备禁止执行 App 数据目录中的二进制。",
             style = MaterialTheme.typography.bodySmall,
-            color = TermForeground.copy(alpha = 0.7f),
+            color = TermForeground.copy(alpha = 0.8f),
             modifier = Modifier.padding(top = Spacing.sm)
         )
         if (log.isNotEmpty()) {

@@ -248,7 +248,7 @@ fun TerminalScreen() {
                                 Text(
                                     text = "输入命令后回车，↑↓ 翻历史",
                                     style = MonoStyle.copy(
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                                     ),
                                     maxLines = 1
                                 )
@@ -395,7 +395,7 @@ private fun TasksCard(
                             .padding(vertical = Spacing.xs),
                         // 同心圆角：外卡 20.dp（shapes.largeIncreased）与任务块间距 16.dp，圆角差 20-16=4.dp
                         shape = MaterialTheme.shapes.extraSmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.06f),
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.12f),
                         onClick = { onFill(task.example) }
                     ) {
                         Row(
@@ -406,7 +406,7 @@ private fun TasksCard(
                                 if (done) Icons.Filled.CheckCircle else Icons.Filled.RadioButtonUnchecked,
                                 contentDescription = null,
                                 tint = if (done) MaterialTheme.colorScheme.tertiary
-                                else MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.5f),
+                                else MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
                                 modifier = Modifier.size(18.dp)
                             )
                             Column(modifier = Modifier.padding(start = Spacing.sm).weight(1f)) {
@@ -420,7 +420,7 @@ private fun TasksCard(
                                     style = MaterialTheme.typography.labelMedium.copy(
                                         fontFamily = FontFamily.Monospace
                                     ),
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f)
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                                 )
                             }
                         }
@@ -429,7 +429,7 @@ private fun TasksCard(
                 Text(
                     text = "点任意任务可一键执行示例命令",
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
                     modifier = Modifier.padding(top = Spacing.xs)
                 )
             }

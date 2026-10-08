@@ -776,26 +776,15 @@ fun DesktopLayerDiagram(
     modifier: Modifier = Modifier
 ) {
     val cs = MaterialTheme.colorScheme
-    // 每层 = 容器色 + 与之配对的 on 容器前景。
-    // 不能统一用 onSurface：第 4~6 层是 *Container 底色，
-    // 深色模式（尤其莫奈取色）下 onSurface 会在浅色容器上变成浅字浅底。
-    val tints: List<LayerTint> = listOf(
-        LayerTint(cs.surfaceContainerHighest, cs.onSurface, cs.onSurfaceVariant),
-        LayerTint(cs.surfaceContainerHigh, cs.onSurface, cs.onSurfaceVariant),
-        LayerTint(cs.surfaceContainer, cs.onSurface, cs.onSurfaceVariant),
-        LayerTint(cs.secondaryContainer, cs.onSecondaryContainer, cs.onSecondaryContainer),
-        LayerTint(cs.primaryContainer, cs.onPrimaryContainer, cs.onPrimaryContainer),
-        LayerTint(cs.tertiaryContainer, cs.onTertiaryContainer, cs.onTertiaryContainer)
-    )
+    // 图例行统一配色：surfaceContainerHigh 底 + onSurface/onSurfaceVariant 前景。
+    // 不做逐层变色——层次感由序号和上下顺序表达，列表本身就是安静的普通列表。
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         layers.forEachIndexed { index, (title, desc) ->
-            val tint = tints.getOrNull(index)
-                ?: LayerTint(cs.surfaceContainer, cs.onSurface, cs.onSurfaceVariant)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(MaterialTheme.shapes.small)
-                    .background(tint.bg)
+                    .background(cs.surfaceContainerHigh)
                     .padding(horizontal = 8.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -803,13 +792,13 @@ fun DesktopLayerDiagram(
                     Text(
                         text = "${index + 1}. $title",
                         style = MaterialTheme.typography.labelLarge,
-                        color = tint.title,
+                        color = cs.onSurface,
                         maxLines = 1
                     )
                     Text(
                         text = desc,
                         style = MaterialTheme.typography.bodySmall,
-                        color = tint.desc.copy(alpha = 0.85f),
+                        color = cs.onSurfaceVariant,
                         maxLines = 2
                     )
                 }
@@ -818,5 +807,3 @@ fun DesktopLayerDiagram(
     }
 }
 
-/** 分层图一层的配色：容器底色 + 标题/描述各自配对的 on 前景 */
-private class LayerTint(val bg: Color, val title: Color, val desc: Color)

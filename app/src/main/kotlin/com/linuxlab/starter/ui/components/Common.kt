@@ -20,16 +20,19 @@ package com.linuxlab.starter.ui.components
 
 import androidx.graphics.shapes.RoundedPolygon
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.ui.unit.Dp
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
@@ -60,6 +63,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -88,6 +93,14 @@ import com.linuxlab.starter.R
 @Composable
 fun navBarBottomInset(extra: Dp = Spacing.xxl): Dp =
     WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + extra
+
+
+/** 聚焦时显式唤起输入法：M3 输入框依赖系统的聚焦自动弹出，个别 ROM 下会失效，这里补一次 show */
+@Composable
+fun Modifier.showKeyboardOnFocus(): Modifier {
+    val keyboard = LocalSoftwareKeyboardController.current
+    return onFocusChanged { if (it.isFocused) keyboard?.show() }
+}
 
 /** 分类图标映射 */
 fun categoryIcon(key: String): ImageVector = when (key) {
@@ -221,6 +234,39 @@ fun CodeBlock(
 }
 
 /** 小节标题：M3 列表分组惯例 —— labelLarge + primary，水平对齐 16dp gutter */
+/**
+ * 编号说明行：小号圆形序号（primaryContainer）+ 内容槽。
+ * 图注（桌面分层）、步骤（排错处理办法）、提示（FHS 详情）共用同一语言。
+ */
+@Composable
+fun NumberedRow(
+    index: Int,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Row(modifier.padding(vertical = Spacing.xs), verticalAlignment = Alignment.Top) {
+        Surface(
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.primaryContainer,
+            modifier = Modifier.size(20.dp)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Text(
+                    text = "${index + 1}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+        }
+        Column(
+            modifier = Modifier
+                .padding(start = Spacing.sm)
+                .weight(1f),
+            content = content
+        )
+    }
+}
+
 @Composable
 fun SectionTitle(
     text: String,

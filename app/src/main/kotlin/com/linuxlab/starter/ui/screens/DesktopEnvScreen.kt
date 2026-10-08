@@ -76,6 +76,8 @@ import com.linuxlab.starter.R
 import com.linuxlab.starter.ui.theme.Spacing
 import androidx.compose.foundation.layout.WindowInsets
 import com.linuxlab.starter.ui.components.navBarBottomInset
+import androidx.compose.material3.HorizontalDivider
+import com.linuxlab.starter.ui.components.NumberedRow
 
 /** 桌面环境教程：列表页 */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -316,15 +318,16 @@ fun DesktopEnvDetailScreen(id: String, onBack: () -> Unit) {
                             modifier = Modifier.padding(Spacing.xs)
                         )
                     }
-                    // 图注
+                    // 图注：编号圆点与示意图上的编号呼应
                     Column(Modifier.padding(top = Spacing.md)) {
-                        env.layoutNotes.forEach { note ->
-                            Text(
-                                text = note,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = cs.onSurfaceVariant,
-                                modifier = Modifier.padding(vertical = 2.dp)
-                            )
+                        env.layoutNotes.forEachIndexed { index, note ->
+                            NumberedRow(index = index) {
+                                Text(
+                                    text = note,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = cs.onSurfaceVariant
+                                )
+                            }
                         }
                     }
                 }
@@ -359,9 +362,9 @@ fun DesktopEnvDetailScreen(id: String, onBack: () -> Unit) {
                 ) {
                     Column(Modifier.padding(Spacing.lg)) {
                         InfoRow("图形工具包", env.toolkit)
-                        InfoRow("默认窗口管理器", env.windowManager)
-                        InfoRow("资源占用", "${env.level}（${env.memory}）")
-                        InfoRow("适合谁", env.bestFor)
+                        InfoRow("默认窗口管理器", env.windowManager, divider = true)
+                        InfoRow("资源占用", "${env.level}（${env.memory}）", divider = true)
+                        InfoRow("适合谁", env.bestFor, divider = true)
                     }
                 }
             }
@@ -402,26 +405,21 @@ fun DesktopEnvDetailScreen(id: String, onBack: () -> Unit) {
 
             item { SectionTitle(text = "新手提示") }
             item {
+                // 中性卡 + 编号行：不再用整片彩色容器（与其他内容卡同一语言）
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = Spacing.lg, vertical = Spacing.xs),
                     shape = MaterialTheme.shapes.largeIncreased,
-                    color = cs.tertiaryContainer
+                    color = cs.surfaceContainerHigh
                 ) {
                     Column(Modifier.padding(Spacing.lg)) {
                         env.tips.forEachIndexed { index, tip ->
-                            Row(Modifier.padding(vertical = Spacing.xs)) {
-                                Text(
-                                    text = "${index + 1}.",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = cs.onTertiaryContainer
-                                )
+                            NumberedRow(index = index) {
                                 Text(
                                     text = tip,
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = cs.onTertiaryContainer,
-                                    modifier = Modifier.padding(start = Spacing.sm)
+                                    color = cs.onSurface
                                 )
                             }
                         }
@@ -454,25 +452,30 @@ fun DesktopEnvDetailScreen(id: String, onBack: () -> Unit) {
 }
 
 @Composable
-private fun InfoRow(label: String, value: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = Spacing.xs),
-        verticalAlignment = Alignment.Top
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.width(120.dp)
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(1f)
-        )
+private fun InfoRow(label: String, value: String, divider: Boolean = false) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        if (divider) {
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = Spacing.sm),
+            verticalAlignment = Alignment.Top
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.width(96.dp)
+            )
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f)
+            )
+        }
     }
 }
 

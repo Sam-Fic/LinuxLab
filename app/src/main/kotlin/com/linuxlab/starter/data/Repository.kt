@@ -148,6 +148,16 @@ object Repository {
     }
 
     /**
+     * 今日推荐命令组：首页翻卡用。第一条与 [dailyCommand] 一致，
+     * 后续在全库均匀取样，整组每天随 dayOfYear 轮换。
+     */
+    fun dailyCommands(count: Int = 6): List<Command> {
+        val day = Calendar.getInstance().get(Calendar.DAY_OF_YEAR)
+        val stride = (all.size / count.coerceAtLeast(1)).coerceAtLeast(1)
+        return List(count) { i -> all[(day + i * stride) % all.size].let(::requireNotNull) }
+    }
+
+    /**
      * 全局搜索：命令名、中英文说明、语法、参数、示例全部参与匹配，
      * 并按匹配位置打分排序（名字命中排最前）。
      */

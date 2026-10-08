@@ -331,7 +331,7 @@ private fun PageContent(page: OnboardingPage, pageIndex: Int, active: Boolean) {
                         .fillMaxWidth()
                         // 要点行：M3 Expressive largeIncreased 档（20dp）
                         .clip(MaterialTheme.shapes.largeIncreased)
-                        .background(cs.surfaceContainerHigh.copy(alpha = 0.75f))
+                        .background(cs.surfaceContainerHigh.copy(alpha = 0.8f))
                         .padding(horizontal = Spacing.lg, vertical = Spacing.lg)
                         .reveal(entered, delay = 200 + index * 70),
                     verticalAlignment = Alignment.CenterVertically

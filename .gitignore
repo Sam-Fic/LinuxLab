@@ -21,4 +21,6 @@ captures/
 # ZCode 工作目录
 # .zcode/tmp 是我的临时区（独立 Gradle HOME、字节码反编译产物、静态原型截图），
 # 单个会话就能涨到 1G 以上；.zcode/plans 是会话计划，同样属于本地状态。
+# .zcodeignore 是 ZCode 工具的本地索引配置，不入库。
 .zcode/
+.zcodeignore

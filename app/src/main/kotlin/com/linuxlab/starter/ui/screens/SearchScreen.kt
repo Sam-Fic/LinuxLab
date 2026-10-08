@@ -63,6 +63,7 @@ import androidx.compose.ui.unit.dp
 import com.linuxlab.starter.data.Repository
 import com.linuxlab.starter.data.UserStore
 import com.linuxlab.starter.model.Faq
+import com.linuxlab.starter.ui.components.showKeyboardOnFocus
 import com.linuxlab.starter.ui.components.CommandRow
 import com.linuxlab.starter.ui.components.EmptyState
 import com.linuxlab.starter.ui.components.FilledFilterChip
@@ -104,6 +105,7 @@ fun SearchScreen(
                 state = searchBarState,
                 inputField = {
                     SearchBarDefaults.InputField(
+                        modifier = Modifier.showKeyboardOnFocus(),
                         textFieldState = textFieldState,
                         searchBarState = searchBarState,
                         onSearch = { },

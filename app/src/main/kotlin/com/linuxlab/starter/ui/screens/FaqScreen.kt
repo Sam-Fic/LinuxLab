@@ -72,6 +72,7 @@ import androidx.compose.ui.unit.dp
 import com.linuxlab.starter.data.Repository
 import com.linuxlab.starter.model.Danger
 import com.linuxlab.starter.model.Faq
+import com.linuxlab.starter.ui.components.showKeyboardOnFocus
 import com.linuxlab.starter.ui.components.CodeBlock
 import com.linuxlab.starter.ui.components.EmptyState
 import com.linuxlab.starter.ui.components.rememberCopyAction
@@ -81,6 +82,8 @@ import com.linuxlab.starter.R
 import com.linuxlab.starter.ui.theme.Spacing
 import androidx.compose.foundation.layout.WindowInsets
 import com.linuxlab.starter.ui.components.navBarBottomInset
+import com.linuxlab.starter.ui.components.NumberedRow
+import androidx.compose.ui.text.style.TextOverflow
 
 /**
  * 常见问题排查：M3 原生「应用栏 + 搜索框」；
@@ -112,6 +115,7 @@ fun FaqScreen(initialQuery: String = "") {
                 state = searchBarState,
                 inputField = {
                     SearchBarDefaults.InputField(
+                        modifier = Modifier.showKeyboardOnFocus(),
                         textFieldState = textFieldState,
                         searchBarState = searchBarState,
                         onSearch = { },
@@ -261,19 +265,31 @@ private fun FaqCard(
             }
 
             if (faq.symptom.isNotBlank()) {
-                // 同心圆角：外卡 20.dp（shapes.largeIncreased）与内块间距 16.dp，圆角差 20-16=4.dp
-                Surface(
-                    shape = MaterialTheme.shapes.extraSmall,
-                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = Spacing.sm)
-                ) {
+                if (expanded) {
+                    // 展开态：症状完整展示（同心圆角：外卡 20 − 内块间距 16 = 4dp）
+                    Surface(
+                        shape = MaterialTheme.shapes.extraSmall,
+                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = Spacing.sm)
+                    ) {
+                        Text(
+                            text = faq.symptom,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(Spacing.md)
+                        )
+                    }
+                } else {
+                    // 折叠态：单行线索，让列表一屏能看更多条目
                     Text(
                         text = faq.symptom,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(Spacing.md)
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(top = Spacing.xs)
                     )
                 }
             }
@@ -321,40 +337,24 @@ private fun FaqCard(
                 )
 
                 faq.steps.forEachIndexed { index, step ->
-                    Row(modifier = Modifier.padding(top = Spacing.sm)) {
-                        Surface(
-                            shape = CircleShape,
-                            color = MaterialTheme.colorScheme.primaryContainer,
-                            modifier = Modifier.size(22.dp)
-                        ) {
-                            androidx.compose.foundation.layout.Box(
-                                contentAlignment = Alignment.Center,
-                                modifier = Modifier.fillMaxSize()
-                            ) {
-                                Text(
-                                    text = "${index + 1}",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
-                            }
-                        }
-                        Spacer(Modifier.width(Spacing.sm))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = step.zh,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface
+                    NumberedRow(
+                        index = index,
+                        modifier = Modifier.padding(top = Spacing.sm)
+                    ) {
+                        Text(
+                            text = step.zh,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        if (step.command.isNotBlank()) {
+                            CodeBlock(
+                                code = step.command,
+                                onCopy = onCopy,
+                                // 同心圆角：外卡 20.dp（shapes.largeIncreased）与代码块间距 16.dp，
+                                // 圆角差 20-16=4.dp
+                                shape = MaterialTheme.shapes.extraSmall,
+                                modifier = Modifier.padding(top = Spacing.sm)
                             )
-                            if (step.command.isNotBlank()) {
-                                CodeBlock(
-                                    code = step.command,
-                                    onCopy = onCopy,
-                                    // 同心圆角：外卡 20.dp（shapes.largeIncreased）与代码块间距 16.dp，
-                                    // 圆角差 20-16=4.dp（full 圆形序号徽章走 full，同为标准档位）
-                                    shape = MaterialTheme.shapes.extraSmall,
-                                    modifier = Modifier.padding(top = Spacing.sm)
-                                )
-                            }
                         }
                     }
                 }

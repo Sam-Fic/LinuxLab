@@ -94,6 +94,13 @@ import com.linuxlab.starter.R
 import com.linuxlab.starter.ui.theme.Spacing
 import androidx.compose.foundation.layout.WindowInsets
 import com.linuxlab.starter.ui.components.navBarBottomInset
+import com.linuxlab.starter.ui.components.NumberedRow
+import com.linuxlab.starter.ui.components.EmptyState
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
+import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.material3.rememberSearchBarState
+import androidx.compose.material3.SearchBarDefaults
 
 // ---------------------------------------------------------------- 分类的图标 / 配色 / 名字
 
@@ -206,7 +213,10 @@ fun FhsScreen(onBack: () -> Unit) {
     val snackbarHostState = remember { SnackbarHostState() }
     val copy = rememberCopyAction(snackbarHostState)
 
-    var query by remember { mutableStateOf("") }
+    // 搜索框迁移到官方 SearchBarDefaults.InputField（TextFieldState 驱动）
+    val searchState = rememberTextFieldState()
+    val fhsSearchBarState = rememberSearchBarState()
+    val query = searchState.text.toString()
     // 展开子目录的节点：默认全部收起，一进来是一张完整的一级目录清单
     val expanded = remember { mutableStateListOf<String>() }
     // 展开详情的节点；再点一次收起
@@ -272,6 +282,19 @@ fun FhsScreen(onBack: () -> Unit) {
                         style = MaterialTheme.typography.bodyMedium,
                         color = cs.onSurfaceVariant
                     )
+                    // 官方搜索输入：与全应用搜索语言一致（不再用下划线 TextField）
+                    SearchBarDefaults.InputField(
+                        textFieldState = searchState,
+                        searchBarState = fhsSearchBarState,
+                        onSearch = { },
+                        placeholder = { Text(stringResource(R.string.search_fhs_placeholder)) },
+                        leadingIcon = {
+                            Icon(Icons.Filled.Search, contentDescription = null)
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = Spacing.md)
+                    )
                     FlowRow(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -281,16 +304,6 @@ fun FhsScreen(onBack: () -> Unit) {
                     ) {
                         LegendKinds.forEach { kind -> LegendChip(kind = kind) }
                     }
-                    TextField(
-                        value = query,
-                        onValueChange = { query = it },
-                        label = { Text(stringResource(R.string.search_fhs_placeholder)) },
-                        placeholder = { Text(stringResource(R.string.search_fhs_example)) },
-                        singleLine = true,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = Spacing.md)
-                    )
                 }
             }
 
@@ -307,10 +320,10 @@ fun FhsScreen(onBack: () -> Unit) {
                             .padding(Spacing.xxl),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = "没有匹配的目录，换个词试试",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = cs.onSurfaceVariant
+                        EmptyState(
+                            icon = Icons.AutoMirrored.Filled.HelpOutline,
+                            title = "没有匹配的目录",
+                            subtitle = "换个关键词试试"
                         )
                     }
                     }
@@ -678,17 +691,11 @@ private fun DetailPanel(
                     ) {
                         Column(Modifier.padding(Spacing.md)) {
                             node.tips.forEachIndexed { index, tip ->
-                                Row(Modifier.padding(vertical = 2.dp)) {
-                                    Text(
-                                        text = "${index + 1}.",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = cs.onSurfaceVariant
-                                    )
+                                NumberedRow(index = index) {
                                     Text(
                                         text = tip,
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = cs.onSurfaceVariant,
-                                        modifier = Modifier.padding(start = Spacing.sm)
+                                        color = cs.onSurfaceVariant
                                     )
                                 }
                             }
